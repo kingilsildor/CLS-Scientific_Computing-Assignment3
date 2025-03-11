@@ -69,12 +69,12 @@ def example_function(param1: int, param2: str) -> bool:
     """
     Briefly explain what this function does.
 
-    Params:
+    Params
     -------
     - param1 (int): Description of param1.
     - param2 (str): Description of param2.
 
-    Returns:
+    Returns
     ---------
     - bool: Description of the return value.
     """

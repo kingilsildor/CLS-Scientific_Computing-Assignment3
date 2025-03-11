@@ -7,12 +7,12 @@ def initialize_grid(N: int, value: int | float = 0.0) -> np.ndarray:
     """
     Initialize a grid of size N x N with a given value
 
-    Params:
+    Params
     -------
     - N (int): size of the grid
     - value (int | float): value to fill the grid with. Default is 0.0
 
-    Returns:
+    Returns
     --------
     - grid (np.ndarray): grid of size N x N
     """
@@ -32,16 +32,19 @@ def initialize_tridiagonal_matrix(
     """
     Initialize a tridiagonal matrix of size N x N with given diagonal and off-diagonal values
 
-    Params:
+    Params
     -------
     - N (int): size of the matrix
     - diagonal_value (int | float): value to fill the diagonal with. Default is -4.0
     - off_diagonal_value (int | float): value to fill the off-diagonal with. Default is 1.0
 
-    Returns:
+    Returns
     --------
     - matrix (sp.sparse._csr.csr_matrix): tridiagonal matrix of size N x N
     """
+    if N % 2 != 0:
+        N += 1
+
     if isinstance(diagonal_value, int):
         diagonal_value = float(diagonal_value)
         off_diagonal_value = float(off_diagonal_value)
@@ -66,14 +69,14 @@ def initialize_grid_vector(
     """
     Initialize a grid of size N x N with a given value in a specific shape
 
-    Params:
+    Params
     -------
     - N (int): size of the grid
     - L (int): size of the shape
     - value (int | float): value to fill the grid with. Default is 1.0
     - shape (str): shape of the grid. Default is 'square'. Choose from 'square', 'rectangle', 'circle'
 
-    Returns:
+    Returns
     --------
     - vector (np.ndarray): grid of size N x N as a vector of size N^2 x 1
     """
@@ -110,5 +113,11 @@ def initialize_grid_vector(
 
 
 if __name__ == "__main__":
-    matrix = initialize_tridiagonal_matrix(5, -4.0, 1.0)
-    print(matrix, type(matrix))
+    N = 5
+    matrix = initialize_tridiagonal_matrix(N, -4.0, 1.0)
+    print(matrix.shape)
+
+    vector = initialize_grid_vector(N, 2, shape="square")
+    print(vector.shape)
+
+    assert matrix.shape[0] ** 2 == vector.shape[0]
