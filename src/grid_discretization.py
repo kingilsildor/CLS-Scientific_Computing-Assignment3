@@ -3,7 +3,7 @@ import scipy as sp
 from numba import njit
 from scipy.sparse import csr_matrix
 
-from src.config import DIAGONAL_VALUE, OFF_DIAGONAL_VALUE
+from src.config import OFF_DIAGONAL_VALUE
 
 
 def initialize_grid(N: int, value: int | float = 0.0) -> np.ndarray:
@@ -48,29 +48,35 @@ def _fill_neighbours(A, N) -> np.ndarray:
             A[i + N, i] = OFF_DIAGONAL_VALUE
 
 
-def initialize_tridiagonal_matrix(N: int) -> sp.sparse._csr.csr_matrix:
+def initialize_tridiagonal_matrix(
+    N: int, sparse: bool = True
+) -> np.ndarray | sp.sparse._csr.csr_matrix:
     """
     Initialize a tridiagonal matrix of size N x N with given diagonal and off-diagonal values
 
     Params
     -------
     - N (int): size of the matrix
+    - sparse (bool): whether to return a sparse matrix. Default is True
 
     Returns
     --------
-    - matrix (sp.sparse._csr.csr_matrix): tridiagonal matrix of size N x N
+    - matrix (np.ndarray): tridiagonal matrix of size N x N
+    - sparse_matrix (sp.sparse._csr.csr_matrix): tridiagonal matrix of size N x N
     """
     if N % 2 != 0:
         N += 1
 
-    matrix = np.zeros((N * N, N * N))
-    np.fill_diagonal(matrix, DIAGONAL_VALUE)
+    matrix = -4 * np.eye(N * N)
     _fill_neighbours(matrix, N)
-
     assert matrix.shape == (N * N, N * N)
 
-    sparse_matrix = csr_matrix(matrix)
-    return sparse_matrix
+    if sparse:
+        sparse_matrix = csr_matrix(matrix)
+        return sparse_matrix
+    if not sparse:
+        return matrix
+    raise ValueError("Sparse should be a boolean value")
 
 
 def initialize_grid_vector(
@@ -98,7 +104,7 @@ def initialize_grid_vector(
     if not isinstance(value, float):
         raise ValueError("Value should be an integer or a float")
 
-    matrix = np.zeros((N, N), dtype=float)
+    matrix = np.zeros((N, N))
 
     if shape == "square":
         start = (N - L) // 2
