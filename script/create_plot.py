@@ -12,6 +12,14 @@ def seaborn_heatmap(arr: np.ndarray, ax: matplotlib.axes._axes.Axes) -> None:
     - arr (np.ndarray): array to plot
     - ax (matplotlib.axes._axes.Axes): axis to plot the heatmap
     """
-    sns.heatmap(arr, ax=ax, cmap="viridis", cbar=False, annot=True, square=True)
+    sns.heatmap(
+        arr,
+        ax=ax,
+        cmap="viridis",
+        cbar=False,
+        annot=True,
+        square=True,
+        annot_kws={"size": 8},
+    )
     ax.set_xticks([])
     ax.set_yticks([])

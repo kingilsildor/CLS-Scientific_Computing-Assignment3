@@ -64,9 +64,6 @@ def initialize_tridiagonal_matrix(
     - matrix (np.ndarray): tridiagonal matrix of size N x N
     - sparse_matrix (sp.sparse._csr.csr_matrix): tridiagonal matrix of size N x N
     """
-    if N % 2 != 0:
-        N += 1
-
     matrix = -4 * np.eye(N * N)
     _fill_neighbours(matrix, N)
     assert matrix.shape == (N * N, N * N)
@@ -96,9 +93,6 @@ def initialize_grid_vector(
     --------
     - vector (np.ndarray): grid of size N x N as a vector of size N^2 x 1
     """
-    if N % 2 != 0:
-        N += 1
-
     if isinstance(value, int):
         value = float(value)
     if not isinstance(value, float):
