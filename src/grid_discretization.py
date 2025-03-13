@@ -1,6 +1,9 @@
 import numpy as np
 import scipy as sp
+from numba import njit
 from scipy.sparse import csr_matrix
+
+from src.config import DIAGONAL_VALUE, OFF_DIAGONAL_VALUE
 
 
 def initialize_grid(N: int, value: int | float = 0.0) -> np.ndarray:
@@ -26,17 +29,32 @@ def initialize_grid(N: int, value: int | float = 0.0) -> np.ndarray:
     return grid
 
 
-def initialize_tridiagonal_matrix(
-    N: int, diagonal_value: int | float = -4.0, off_diagonal_value: int | float = 1.0
-) -> sp.sparse._csr.csr_matrix:
+@njit
+def _fill_neighbours(A, N) -> np.ndarray:
+    """
+    Helper function to fill the neighbours of a given node in a grid
+
+    Params
+    -------
+    - A (np.ndarray): grid of size n x n
+    - n (int): size of the grid
+    """
+    for i in range(N * N):
+        if (i + 1) % N != 0:
+            A[i, i + 1] = OFF_DIAGONAL_VALUE
+            A[i + 1, i] = OFF_DIAGONAL_VALUE
+        if i + N < N * N:
+            A[i, i + N] = OFF_DIAGONAL_VALUE
+            A[i + N, i] = OFF_DIAGONAL_VALUE
+
+
+def initialize_tridiagonal_matrix(N: int) -> sp.sparse._csr.csr_matrix:
     """
     Initialize a tridiagonal matrix of size N x N with given diagonal and off-diagonal values
 
     Params
     -------
     - N (int): size of the matrix
-    - diagonal_value (int | float): value to fill the diagonal with. Default is -4.0
-    - off_diagonal_value (int | float): value to fill the off-diagonal with. Default is 1.0
 
     Returns
     --------
@@ -45,19 +63,11 @@ def initialize_tridiagonal_matrix(
     if N % 2 != 0:
         N += 1
 
-    if isinstance(diagonal_value, int):
-        diagonal_value = float(diagonal_value)
-        off_diagonal_value = float(off_diagonal_value)
-    if not isinstance(diagonal_value, float) or not isinstance(
-        off_diagonal_value, float
-    ):
-        raise ValueError("Values should be integers or floats")
+    matrix = np.zeros((N * N, N * N))
+    np.fill_diagonal(matrix, DIAGONAL_VALUE)
+    _fill_neighbours(matrix, N)
 
-    matrix = np.zeros((N, N), dtype=float)
-    np.fill_diagonal(matrix, diagonal_value)
-    np.fill_diagonal(matrix[1:], off_diagonal_value)
-    np.fill_diagonal(matrix[:, 1:], off_diagonal_value)
-    assert matrix.shape == (N, N)
+    assert matrix.shape == (N * N, N * N)
 
     sparse_matrix = csr_matrix(matrix)
     return sparse_matrix
@@ -113,11 +123,7 @@ def initialize_grid_vector(
 
 
 if __name__ == "__main__":
-    N = 5
-    matrix = initialize_tridiagonal_matrix(N, -4.0, 1.0)
-    print(matrix.shape)
-
-    vector = initialize_grid_vector(N, 2, shape="square")
-    print(vector.shape)
-
-    assert matrix.shape[0] ** 2 == vector.shape[0]
+    N = 100
+    matrix = initialize_tridiagonal_matrix(N)
+    vector = initialize_grid_vector(N, 20, 1.0, "circle")
+    print(matrix.shape, vector.shape)
