@@ -74,7 +74,7 @@ def plot_eigenmodus(
 
 
 def plot_eigenfrequency(
-    L_list, frequency_list, shape: str, save_img: bool = False
+    L_list, frequency_list, N: int, shape: str, save_img: bool = False
 ) -> None:
     """
     Plot the eigenfrequencies of the matrix and save the image if specified.
@@ -83,6 +83,7 @@ def plot_eigenfrequency(
     -------
     - L_list (np.ndarray): list of L values
     - frequency_list (np.ndarray): list of frequencies
+    - N (int): size of the grid
     - shape (str): shape of the grid
     - save_img (bool): flag to save the image. Default is False
     """
@@ -92,7 +93,7 @@ def plot_eigenfrequency(
     plt.xlabel("$L$")
     plt.ylabel("Frequency")
     plt.legend()
-    plt.title(f"Eigenfrequencies of the {shape} shape")
+    plt.title(f"Eigenfrequencies {shape} shape with $N={N}$")
     plt.tight_layout()
 
     if save_img:

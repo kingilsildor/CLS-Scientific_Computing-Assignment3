@@ -81,6 +81,7 @@ def solve_eigenvalues(
     )
     if not isinstance(matrix, np.ndarray):
         time_output += " using sparse solver"
+    time_output += f" with matrix of size {matrix.shape[0]}"
     print(time_output)
 
     frequencies = _get_frequency(eigenvalues)
@@ -125,5 +126,5 @@ def get_frequencies(
         frequencies, _ = solve_eigenvalues(M, model="h", num_modes=NUM_MODES)
         frequencies_list[i] = frequencies[:NUM_MODES]
 
-    assert frequencies_list != 0
+    assert not np.any(frequencies_list == 0)
     return frequencies_list
