@@ -1,9 +1,14 @@
+import glob
+import os
+
+import imageio
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
 from src.config import FIG_DIR, FIG_DPI, FIG_SIZE
+from src.eigen_solver import time_dependent_solution
 
 
 def create_seaborn_heatmap(arr: np.ndarray, ax: matplotlib.axes._axes.Axes) -> None:
@@ -49,6 +54,9 @@ def plot_eigenmodus(
     - eigenvectors (np.ndarray): eigenvectors of the eigenvalues
     - save_img (bool): flag to save the image. Default is False
     """
+    if not os.path.exists(FIG_DIR):
+        os.makedirs(FIG_DIR)
+
     N_eigenvectors = eigenvectors.shape[1]
     if plot_amount > N_eigenvectors:
         raise ValueError(
@@ -87,6 +95,9 @@ def plot_eigenfrequency(
     - shape (str): shape of the grid
     - save_img (bool): flag to save the image. Default is False
     """
+    if not os.path.exists(FIG_DIR):
+        os.makedirs(FIG_DIR)
+
     plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
     for i, _ in enumerate(L_list):
         plt.plot(L_list, frequency_list[:, i], label=f"Eigenmode {i + 1}")
@@ -102,3 +113,56 @@ def plot_eigenfrequency(
     else:
         plt.show()
     plt.close()
+
+
+def plot_eigenmode_animation(
+    c,
+    eigenmode,
+    eigenfrequency,
+    timepoints,
+    shape: str,
+    duration: int = 10,
+    delete_img: bool = True,
+) -> None:
+    """
+    Plot the eigenmode animation and save the gif. Delete the images if specified.
+
+    Params
+    -------
+    - c (float): speed of the wave
+    - eigenmode (np.ndarray): eigenmode of the matrix
+    - eigenfrequency (float): frequency of the eigenmode
+    - timepoints (np.ndarray): timepoints to plot
+    - shape (str): shape of the grid
+    - duration (int): duration of each frame in ms. Default is 10
+    - delete_img (bool): flag to delete the images. Default is True
+    """
+    if not os.path.exists(FIG_DIR):
+        os.makedirs(FIG_DIR)
+
+    for i, t in enumerate(timepoints):
+        plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
+
+        u = time_dependent_solution(c, eigenmode, eigenfrequency, t)
+
+        plt.imshow(u.real, cmap="RdBu", vmin=-1, vmax=1)
+        plt.colorbar()
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.title(
+            f"t = {timepoints[i]:.1f} for frequency {eigenfrequency:.4f} and shape {shape}"
+        )
+        plt.tight_layout()
+        plt.savefig(f"{FIG_DIR}frame_{i:03d}.png")
+        plt.close()
+
+    images = [
+        imageio.imread(f"{FIG_DIR}frame_{i:03d}.png") for i in range(len(timepoints))
+    ]
+    imageio.mimsave(f"{FIG_DIR}wave.gif", images, duration=duration)
+
+    print(type(images))
+    if delete_img:
+        for image in images:
+            os.remove(image)
+        assert not glob.glob(f"{FIG_DIR}frame_*.png")

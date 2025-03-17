@@ -177,3 +177,4 @@ script/*.ipynb
 # Binary files
 *.mp4
 *.csv
+**test.ipynb

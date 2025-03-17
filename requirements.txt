@@ -10,3 +10,4 @@ scipy==1.15.1
 tqdm==4.67.1
 joblib==1.4.2
 seaborn
+imageio

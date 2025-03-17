@@ -15,3 +15,4 @@ OFF_DIAGONAL_VALUE = 1.0
 
 # Eigenvalue solver parameters
 NUM_MODES = 5
+SELECT_MODE = 0

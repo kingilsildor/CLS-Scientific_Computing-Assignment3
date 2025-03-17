@@ -81,14 +81,15 @@ def solve_eigenvalues(
     )
     if not isinstance(matrix, np.ndarray):
         time_output += " using sparse solver"
-    time_output += f" with matrix of size {matrix.shape[0]}"
+    N = int(np.sqrt(matrix.shape[0]))
+    time_output += f" with matrix of size {int(matrix.shape[0])}, N={N}"
     print(time_output)
 
     frequencies = _get_frequency(eigenvalues)
     return (frequencies, eigenvectors)
 
 
-def get_frequencies(
+def get_frequencies_list(
     N: int,
     dx: float,
     L_list: np.ndarray,
@@ -128,3 +129,40 @@ def get_frequencies(
 
     assert not np.any(frequencies_list == 0)
     return frequencies_list
+
+
+def normalize_eigenmodus(eigenmodus: np.ndarray) -> np.ndarray:
+    """
+    Normalize the individual eigenmodus
+
+    Params
+    -------
+    - eigenmodus (np.ndarray): eigenmodus to normalize
+
+    Returns
+    --------
+    - normalized_eigenmodus (np.ndarray): normalized eigenmodus
+    """
+    for i, _ in enumerate(eigenmodus):
+        eigenmodus[i] = eigenmodus[i] / np.max(np.abs(eigenmodus[i]))
+    return eigenmodus
+
+
+def time_dependent_solution(c, eigenmode, frequency, t):
+    """
+    Calculate the time-dependent solution of the wave equation
+
+    Params
+    -------
+    - c (float): speed of sound
+    - eigenmode (np.ndarray): eigenmode of the matrix
+    - frequency (float): frequency of the eigenmode
+    - t (float): time
+
+    Returns
+    --------
+    - T (np.ndarray): time-dependent solution of the wave equation
+    """
+    return eigenmode * np.cos(c * frequency * t) + 1j * eigenmode * np.sin(
+        c * frequency * t
+    )
