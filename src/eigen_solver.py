@@ -163,6 +163,4 @@ def time_dependent_solution(c, eigenmode, frequency, t):
     --------
     - T (np.ndarray): time-dependent solution of the wave equation
     """
-    return eigenmode * np.cos(c * frequency * t) + 1j * eigenmode * np.sin(
-        c * frequency * t
-    )
+    return eigenmode * np.cos(c * frequency * t) + eigenmode * np.sin(c * frequency * t)

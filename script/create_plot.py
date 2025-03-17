@@ -161,8 +161,8 @@ def plot_eigenmode_animation(
     ]
     imageio.mimsave(f"{FIG_DIR}wave.gif", images, duration=duration)
 
-    print(type(images))
     if delete_img:
+        images = glob.glob(f"{FIG_DIR}frame_*.png")
         for image in images:
             os.remove(image)
         assert not glob.glob(f"{FIG_DIR}frame_*.png")
