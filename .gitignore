@@ -177,3 +177,7 @@ script/*.ipynb
 # Binary files
 *.mp4
 *.csv
+**test.ipynb
+
+# Images that are used for processing
+**frame_*.png

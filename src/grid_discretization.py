@@ -3,8 +3,6 @@ import scipy as sp
 from numba import njit
 from scipy.sparse import csr_matrix
 
-from src.config import DIAGONAL_VALUE, OFF_DIAGONAL_VALUE
-
 
 def initialize_grid(N: int, value: int | float = 0.0) -> np.ndarray:
     """
@@ -30,47 +28,60 @@ def initialize_grid(N: int, value: int | float = 0.0) -> np.ndarray:
 
 
 @njit
-def _fill_neighbours(A, N) -> np.ndarray:
+def _fill_neighbours(new_A, A) -> np.ndarray:
     """
-    Helper function to fill the neighbours of a given node in a grid
+    Fill the neighbors of a given matrix A
 
     Params
     -------
-    - A (np.ndarray): grid of size n x n
-    - n (int): size of the grid
-    """
-    for i in range(N * N):
-        if (i + 1) % N != 0:
-            A[i, i + 1] = OFF_DIAGONAL_VALUE
-            A[i + 1, i] = OFF_DIAGONAL_VALUE
-        if i + N < N * N:
-            A[i, i + N] = OFF_DIAGONAL_VALUE
-            A[i + N, i] = OFF_DIAGONAL_VALUE
-
-
-def initialize_tridiagonal_matrix(N: int) -> sp.sparse._csr.csr_matrix:
-    """
-    Initialize a tridiagonal matrix of size N x N with given diagonal and off-diagonal values
-
-    Params
-    -------
-    - N (int): size of the matrix
+    - new_A (np.ndarray): matrix to fill the neighbors for
+    - A (np.ndarray): matrix to find the neighbors for
 
     Returns
     --------
-    - matrix (sp.sparse._csr.csr_matrix): tridiagonal matrix of size N x N
+    - new_A (np.ndarray): matrix with neighbors filled
     """
-    if N % 2 != 0:
-        N += 1
+    N = A.shape[0]
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    for x in range(N):
+        for y in range(N):
+            if A[x, y] == 1:
+                current_index = x * N + y
 
-    matrix = np.zeros((N * N, N * N))
-    np.fill_diagonal(matrix, DIAGONAL_VALUE)
-    _fill_neighbours(matrix, N)
+                for dx, dy in directions:
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < N and 0 <= ny < N and A[nx, ny] == 1:
+                        neighbor_index = nx * N + ny
+                        new_A[current_index, neighbor_index] = 1
+    return new_A
 
-    assert matrix.shape == (N * N, N * N)
 
-    sparse_matrix = csr_matrix(matrix)
-    return sparse_matrix
+def initialize_tridiagonal_matrix(
+    vector: np.ndarray, sparse: bool = True
+) -> np.ndarray | sp.sparse._csr.csr_matrix:
+    """
+    Initialize a tridiagonal matrix from a given vector
+
+    Params
+    -------
+    - vector (np.ndarray): vector to initialize the tridiagonal matrix from
+    - sparse (bool): whether to return a sparse matrix. Default is True
+
+    Returns
+    --------
+    - matrix (np.ndarray | sp.sparse._csr.csr_matrix): tridiagonal matrix of the 5-point stencil
+    """
+    N = vector.shape[0]
+    side = int(np.sqrt(N))
+    matrix = vector.flatten().reshape(side, side)
+
+    stencil_matrix = -4 * np.eye(N, dtype=int)
+    stencil_matrix = _fill_neighbours(stencil_matrix, matrix)
+
+    if sparse:
+        stencil_matrix = csr_matrix(stencil_matrix)
+
+    return stencil_matrix
 
 
 def initialize_grid_vector(
@@ -90,15 +101,12 @@ def initialize_grid_vector(
     --------
     - vector (np.ndarray): grid of size N x N as a vector of size N^2 x 1
     """
-    if N % 2 != 0:
-        N += 1
-
     if isinstance(value, int):
         value = float(value)
     if not isinstance(value, float):
         raise ValueError("Value should be an integer or a float")
 
-    matrix = np.zeros((N, N), dtype=float)
+    matrix = np.zeros((N, N))
 
     if shape == "square":
         start = (N - L) // 2
