@@ -1,9 +1,12 @@
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
+from src.config import FIG_DIR, FIG_DPI, FIG_SIZE
 
-def seaborn_heatmap(arr: np.ndarray, ax: matplotlib.axes._axes.Axes) -> None:
+
+def create_seaborn_heatmap(arr: np.ndarray, ax: matplotlib.axes._axes.Axes) -> None:
     """
     Create a heatmap using seaborn library.
 
@@ -23,3 +26,78 @@ def seaborn_heatmap(arr: np.ndarray, ax: matplotlib.axes._axes.Axes) -> None:
     )
     ax.set_xticks([])
     ax.set_yticks([])
+
+
+def plot_eigenmodus(
+    plot_amount: int,
+    N: int,
+    L: int,
+    frequencies: np.ndarray,
+    eigenvectors: np.ndarray,
+    shape: str,
+    save_img: bool = False,
+) -> None:
+    """
+    Plot the eigenmodes of the matrix and save the image if specified.
+
+    Params
+    -------
+    - plot_amount (int): amount of eigenmodes to plot
+    - N (int): size of the grid
+    - L (int): size of the shape
+    - frequencies (np.ndarray): frequencies of the eigenvalues
+    - eigenvectors (np.ndarray): eigenvectors of the eigenvalues
+    - save_img (bool): flag to save the image. Default is False
+    """
+    N_eigenvectors = eigenvectors.shape[1]
+    if plot_amount > N_eigenvectors:
+        raise ValueError(
+            f"Plot amount should be less than or equal to {N_eigenvectors}"
+        )
+
+    for i in range(plot_amount):
+        plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
+        v = eigenvectors[:, i].T.real
+        plt.imshow(v.reshape(N, N), cmap="RdBu")
+        plt.colorbar()
+        plt.title(
+            f"Eigenmode {i + 1} with frequency ${frequencies[i]:.4f}$\n {shape} shape of $L={L}$ and $N={N}$"
+        )
+        plt.tight_layout()
+
+        if save_img:
+            title = f"eigenmode_{shape}_{i + 1}.png"
+            plt.savefig(f"{FIG_DIR}{title}")
+        else:
+            plt.show()
+        plt.close()
+
+
+def plot_eigenfrequency(
+    L_list, frequency_list, shape: str, save_img: bool = False
+) -> None:
+    """
+    Plot the eigenfrequencies of the matrix and save the image if specified.
+
+    Params
+    -------
+    - L_list (np.ndarray): list of L values
+    - frequency_list (np.ndarray): list of frequencies
+    - shape (str): shape of the grid
+    - save_img (bool): flag to save the image. Default is False
+    """
+    plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
+    for i, _ in enumerate(L_list):
+        plt.plot(L_list, frequency_list[:, i], label=f"Eigenmode {i + 1}")
+    plt.xlabel("$L$")
+    plt.ylabel("Frequency")
+    plt.legend()
+    plt.title(f"Eigenfrequencies of the {shape} shape")
+    plt.tight_layout()
+
+    if save_img:
+        title = f"eigenfrequencies_{shape}.png"
+        plt.savefig(f"{FIG_DIR}{title}")
+    else:
+        plt.show()
+    plt.close()
