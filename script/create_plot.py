@@ -144,7 +144,7 @@ def plot_eigenmode_animation(
 
         u = time_dependent_solution(c, eigenmode, eigenfrequency, t)
 
-        plt.imshow(u.real, cmap="RdBu", vmin=-1, vmax=1)
+        plt.imshow(u.real, cmap="RdBu")
         plt.colorbar()
         plt.xlabel("x")
         plt.ylabel("y")
