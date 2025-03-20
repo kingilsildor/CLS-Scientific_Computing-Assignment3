@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from src.config import FIG_DIR, FIG_DPI, FIG_SIZE
+from src.config import FIG_DIR, FIG_DPI, FIG_SIZE, SCALER
 from src.eigen_solver import time_dependent_solution
 
 
@@ -95,9 +95,6 @@ def plot_eigenfrequency(
     - shape (str): shape of the grid
     - save_img (bool): flag to save the image. Default is False
     """
-    if not os.path.exists(FIG_DIR):
-        os.makedirs(FIG_DIR)
-
     plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
     for i, _ in enumerate(L_list):
         plt.plot(L_list, frequency_list[:, i], label=f"Eigenmode {i + 1}")
@@ -108,6 +105,8 @@ def plot_eigenfrequency(
     plt.tight_layout()
 
     if save_img:
+        if not os.path.exists(FIG_DIR):
+            os.makedirs(FIG_DIR)
         title = f"eigenfrequencies_{shape}.png"
         plt.savefig(f"{FIG_DIR}{title}")
     else:
@@ -166,3 +165,57 @@ def plot_eigenmode_animation(
         for image in images:
             os.remove(image)
         assert not glob.glob(f"{FIG_DIR}frame_*.png")
+
+
+def plot_multiple_eigenmodes(
+    amount: int,
+    frequencies: np.ndarray,
+    eigenvectors: np.ndarray,
+    L: int,
+    shape: str,
+    save_img: bool = False,
+) -> None:
+    """
+    Plot multiple eigenmodes in a single plot.
+
+    Params
+    -------
+    - amount (int): amount of eigenmodes to plot
+    - frequencies (np.ndarray): frequencies of the eigenvalues
+    - eigenvectors (np.ndarray): eigenvectors of the eigenvalues
+    - L (int): size of the shape
+    - shape (str): shape of the grid
+    - save_img (bool): flag to save the image. Default is False
+    """
+    N_eigenvectors = eigenvectors.shape[1]
+    if amount > N_eigenvectors:
+        raise ValueError(
+            f"Plot amount should be less than or equal to {N_eigenvectors}"
+        )
+
+    x, y = FIG_SIZE
+    x = x * 2
+    fig, axs = plt.subplots(1, amount, figsize=(x, y), dpi=FIG_DPI)
+    for i in range(amount):
+        if shape == "rectangle":
+            v = eigenvectors[:, i].real.reshape(L, 2 * L)
+        else:
+            v = eigenvectors[:, i].real.reshape(L, L)
+        img = axs[i].imshow(v, cmap="RdBu", origin="lower", aspect="auto")
+        if shape == "rectangle":
+            axs[i].set_aspect(1.5)
+        fig.colorbar(img, ax=axs[i])
+
+        current_frequency = frequencies[i] * SCALER
+        axs[i].set_title(f"Eigenmode {i + 1}\nFrequency: {current_frequency:.2f} kHz")
+
+    plt.tight_layout()
+
+    if save_img:
+        if not os.path.exists(FIG_DIR):
+            os.makedirs(FIG_DIR)
+        title = f"{shape}_eigenmodes.png"
+        plt.savefig(f"{FIG_DIR}{title}")
+    else:
+        plt.show()
+    plt.close()

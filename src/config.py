@@ -7,7 +7,8 @@ FIG_TICK_SIZE = 14
 FIG_DIR = "results/"
 
 # Interface
-PLOTS_AMOUNT = 2
+PLOTS_AMOUNT = 4
+SCALER = 1000
 
 # 5-point stencil values
 DIAGONAL_VALUE = -4.0
@@ -15,6 +16,7 @@ OFF_DIAGONAL_VALUE = 1.0
 
 # Eigenvalue solver parameters
 NUM_MODES = 5
+NUM_EIGENVALUES = 10
 SELECT_MODE = 0
 
 # Time-dependent solution parameters

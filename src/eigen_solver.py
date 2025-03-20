@@ -5,7 +5,7 @@ import scipy as sp
 import scipy.linalg as la
 import scipy.sparse.linalg as spla
 
-from src.config import NUM_MODES
+from src.config import NUM_EIGENVALUES, NUM_MODES
 from src.grid_discretization import (
     initialize_grid_vector,
     initialize_tridiagonal_matrix,
@@ -32,7 +32,7 @@ def _get_frequency(eigenvalues: np.ndarray) -> np.ndarray:
 def solve_eigenvalues(
     matrix: np.ndarray | sp.sparse._csr.csr_matrix,
     model: str = "None",
-    num_modes: int = NUM_MODES,
+    num_eigen: int = NUM_EIGENVALUES,
     side: str = "SM",
 ) -> tuple:
     """
@@ -65,13 +65,13 @@ def solve_eigenvalues(
         eigenvalues, eigenvectors = (
             la.eig(matrix)
             if isinstance(matrix, np.ndarray)
-            else spla.eigs(matrix, k=num_modes, which=side)
+            else spla.eigs(matrix, k=num_eigen, which=side)
         )
     elif model == "h":
         eigenvalues, eigenvectors = (
             la.eigh(matrix)
             if isinstance(matrix, np.ndarray)
-            else spla.eigsh(matrix, k=num_modes, which=side)
+            else spla.eigsh(matrix, k=num_eigen, which=side)
         )
     else:
         raise ValueError("Invalid model. Choose from 'None' or 'h'")
@@ -85,8 +85,9 @@ def solve_eigenvalues(
     time_output += f" with matrix of size {int(matrix.shape[0])}, N={N}"
     print(time_output)
 
-    frequencies = _get_frequency(eigenvalues)
-    return (frequencies, eigenvectors)
+    idx = np.argsort(np.abs(eigenvalues.real))
+    eigenfrequencies = _get_frequency(eigenvalues)
+    return (eigenfrequencies[idx], eigenvectors[:, idx])
 
 
 def get_frequencies_list(
@@ -163,4 +164,4 @@ def time_dependent_solution(c, eigenmode, frequency, t):
     --------
     - T (np.ndarray): time-dependent solution of the wave equation
     """
-    return eigenmode * np.cos(c * frequency * t) + eigenmode * np.sin(c * frequency * t)
+    return eigenmode * (np.cos(c * frequency * t) + np.sin(c * frequency * t))
