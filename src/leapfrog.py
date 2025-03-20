@@ -4,7 +4,7 @@ import numpy as np
 
 def leapfrog(T, F_x, k, delta_t=0.01, F_t=None, m=1, initial_v=None):
     # Get number of timesteps and initials arrays
-    num_time_steps = int(T // delta_t)
+    num_time_steps = int(T / delta_t)
 
     x_list = np.zeros(num_time_steps + 1)
     v_list = np.zeros(num_time_steps + 1)
@@ -14,7 +14,7 @@ def leapfrog(T, F_x, k, delta_t=0.01, F_t=None, m=1, initial_v=None):
     if initial_v == "zero":
         v_list[0] = 0
     else:
-        v_list[0] = delta_t * F_x(x_list[0], k) / m
+        v_list[0] = delta_t * F_x(x_list[0], k) / (2 * m)
 
     # If external force is not provided, set it to zero
     if F_t is None:
@@ -89,4 +89,66 @@ def plot_leapfrog_various_k(positions, velocities, k_values, T, save=False):
     plt.legend()
     if save:
         plt.savefig("results/leapfrog_velocity.png")
+    plt.show()
+
+
+def plot_leapfrog_errors(positions, velocities, k, T, delta_t=0.01, m=1, save=False):
+    # Plot position errors
+    t_position = np.linspace(0, T, len(positions[0]))
+
+    def exact_position(t, k, m):
+        A = 1
+        omega = np.sqrt(k / m)
+        phi = np.pi / 2
+
+        return A * np.sin(omega * t + phi)
+
+    plt.plot(
+        t_position,
+        exact_position(t_position, k, m) - positions[0],
+        label=r"$v_{1/2} = \Delta t \cdot F(x_0) / m$",
+        color="y",
+    )
+    plt.plot(
+        t_position,
+        exact_position(t_position, k, m) - positions[1],
+        label=r"$v_{1/2} = 0$",
+        color="g",
+    )
+    plt.title("Error in Position vs Time")
+    plt.xlabel("Time")
+    plt.ylabel("Error in Position")
+    plt.legend()
+    if save:
+        plt.savefig("results/leapfrog_position_errors.png")
+    plt.show()
+
+    # Plot velocity errors
+    t_velocity = np.linspace(delta_t / 2, T + delta_t / 2, len(positions[0]))
+
+    def exact_velocity(t, k, m):
+        A = 1
+        omega = np.sqrt(k / m)
+        phi = np.pi / 2
+
+        return A * omega * np.cos(omega * t + phi)
+
+    plt.plot(
+        t_velocity,
+        exact_velocity(t_velocity, k, m) - velocities[0],
+        label=r"$v_{1/2} = \Delta t \cdot F(x_0) / m$",
+        color="y",
+    )
+    plt.plot(
+        t_velocity,
+        exact_velocity(t_velocity, k, m) - velocities[1],
+        label=r"$v_{1/2} = 0$",
+        color="g",
+    )
+    plt.title("Error in Velocity vs Time")
+    plt.xlabel("Time")
+    plt.ylabel("Error in Velocity")
+    plt.legend()
+    if save:
+        plt.savefig("results/leapfrog_velocity_errors.png")
     plt.show()
