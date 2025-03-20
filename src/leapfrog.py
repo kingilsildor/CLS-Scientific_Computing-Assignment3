@@ -2,23 +2,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def leapfrog(T, F_x, k, delta_t=0.01, F_t=None, m=1):
+def leapfrog(T, F_x, k, delta_t=0.01, F_t=None, m=1, initial_v=None):
+    # Get number of timesteps and initials arrays
     num_time_steps = int(T // delta_t)
 
     x_list = np.zeros(num_time_steps + 1)
     v_list = np.zeros(num_time_steps + 1)
 
-    x_list[0] = 1  # Initial position of the mass at t = 0
-    v_list[0] = (
-        delta_t * F_x(x_list[0], k) / m
-    )  # Initial velocity of the mass at t = 1/2 * delta_t
-    # v_list[0] = 0
+    # Initial conditions
+    x_list[0] = 1
+    if initial_v == "zero":
+        v_list[0] = 0
+    else:
+        v_list[0] = delta_t * F_x(x_list[0], k) / m
 
+    # If external force is not provided, set it to zero
     if F_t is None:
 
         def F_t(t, A, omega):
             return 0
 
+    # Run the method
     for i in range(num_time_steps):
         x_list[i + 1] = x_list[i] + delta_t * v_list[i]
         v_list[i + 1] = (
