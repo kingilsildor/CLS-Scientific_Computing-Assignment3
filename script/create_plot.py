@@ -201,10 +201,10 @@ def plot_multiple_eigenmodes(
             v = eigenvectors[:, i].real.reshape(L, 2 * L)
         else:
             v = eigenvectors[:, i].real.reshape(L, L)
-        img = axs[i].imshow(v, cmap="RdBu", origin="lower", aspect="auto")
+        img = axs[i].imshow(v, cmap="RdBu", origin="lower", aspect="equal")
         if shape == "rectangle":
             axs[i].set_aspect(1.5)
-        fig.colorbar(img, ax=axs[i])
+        fig.colorbar(img, ax=axs[i], shrink=0.4 if shape == "rectangle" else 0.6)
 
         current_frequency = frequencies[i] * SCALER
         axs[i].set_title(f"Eigenmode {i + 1}\nFrequency: {current_frequency:.2f} kHz")

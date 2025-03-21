@@ -1,6 +1,5 @@
 import numpy as np
 
-from script.create_plot import plot_eigenmode_animation
 from src.config import *
 from src.eigen_solver import solve_eigenvalues
 from src.grid_discretization import (
@@ -26,15 +25,16 @@ def eigenvalues(m):
 def main():
     t_list = np.linspace(0, 100, 200)
 
-    shape = "square"
+    shape = "rectangle"
     L = 60
     m = create_grid(L, shape)
     frequencies, eigenvectors = eigenvalues(m)
-    eigenmode = eigenvectors[:, -1].reshape(L, L).real
-    frequency = frequencies[-1]
 
-    print(frequency, eigenmode)
-    plot_eigenmode_animation(1.0, eigenmode, frequency, t_list, shape)
+    # eigenmode = eigenvectors[:, -1].reshape(L, L).real
+    # frequency = frequencies[-1]
+
+    # print(frequency, eigenmode)
+    # plot_eigenmode_animation(1.0, eigenmode, frequency, t_list, shape)
 
 
 if __name__ == "__main__":
