@@ -122,4 +122,3 @@ if __name__ == "__main__":
     N = 100
     matrix = initialize_tridiagonal_matrix(N)
     vector = initialize_grid_vector(N, 20, 1.0, "circle")
-    print(matrix.shape, vector.shape)

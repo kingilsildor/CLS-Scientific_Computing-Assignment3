@@ -139,17 +139,21 @@ def plot_eigenmode_animation(
     if not os.path.exists(FIG_DIR):
         os.makedirs(FIG_DIR)
 
+    min = -np.max(eigenmode.real)
+    max = np.max(eigenmode.real)
+
     for i, t in enumerate(timepoints):
         plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
+        T = time_dependent_solution(c, eigenfrequency, t)
 
-        u = time_dependent_solution(c, eigenmode, eigenfrequency, t)
+        u = eigenmode * T
 
-        plt.imshow(u.real, cmap="RdBu")
+        plt.imshow(u.real, cmap="RdBu", vmin=min, vmax=max)
         plt.colorbar()
         plt.xlabel("x")
         plt.ylabel("y")
         plt.title(
-            f"t = {timepoints[i]:.1f} for frequency {eigenfrequency:.4f} and shape {shape}"
+            f"t = {timepoints[i]:.1f} for frequency {eigenfrequency.real:.4f} and shape {shape}"
         )
         plt.tight_layout()
         plt.savefig(f"{FIG_DIR}frame_{i:03d}.png")
@@ -206,8 +210,7 @@ def plot_multiple_eigenmodes(
             axs[i].set_aspect(1.5)
         fig.colorbar(img, ax=axs[i], shrink=0.4 if shape == "rectangle" else 0.6)
 
-        current_frequency = frequencies[i] * SCALER
-        axs[i].set_title(f"Eigenmode {i + 1}\nFrequency: {current_frequency:.2f} kHz")
+        axs[i].set_title(f"Eigenmode {i + 1}\nFrequency: {frequencies[i].real:.2f} kHz")
 
     plt.tight_layout()
 

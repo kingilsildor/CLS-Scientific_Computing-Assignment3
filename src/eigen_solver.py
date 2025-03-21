@@ -25,7 +25,7 @@ def _get_frequency(eigenvalues: np.ndarray) -> np.ndarray:
     --------
     - frequencies (np.ndarray): frequencies of the eigenvalues
     """
-    frequencies = np.sqrt(-eigenvalues.real)
+    frequencies = np.sqrt(-eigenvalues)
     return frequencies
 
 
@@ -62,16 +62,18 @@ def solve_eigenvalues(
     )
 
     if model == "None":
+        print(f"Solving the eigenvalues using regular solver for matrix")
         eigenvalues, eigenvectors = (
             la.eig(matrix)
             if isinstance(matrix, np.ndarray)
             else spla.eigs(matrix, k=num_eigen, which=side)
         )
     elif model == "h":
+        print(f"Solving the eigenvalue using hermitian solver")
         eigenvalues, eigenvectors = (
             la.eigh(matrix)
             if isinstance(matrix, np.ndarray)
-            else spla.eigsh(matrix, k=num_eigen, which=side)
+            else spla.eigsh(matrix, k=6, which='SM')
         )
     else:
         raise ValueError("Invalid model. Choose from 'None' or 'h'")
@@ -86,6 +88,7 @@ def solve_eigenvalues(
     print(time_output)
 
     idx = np.argsort(np.abs(eigenvalues.real))
+    print(eigenvalues.real)
     eigenfrequencies = _get_frequency(eigenvalues)
     return (eigenfrequencies[idx], eigenvectors[:, idx])
 
@@ -149,7 +152,7 @@ def normalize_eigenmodus(eigenmodus: np.ndarray) -> np.ndarray:
     return eigenmodus
 
 
-def time_dependent_solution(c, eigenmode, frequency, t):
+def time_dependent_solution(c, frequency, t, A=1, B=1):
     """
     Calculate the time-dependent solution of the wave equation
 
@@ -159,9 +162,11 @@ def time_dependent_solution(c, eigenmode, frequency, t):
     - eigenmode (np.ndarray): eigenmode of the matrix
     - frequency (float): frequency of the eigenmode
     - t (float): time
+    - A (int): amplitude of the cosine. Default is 1
+    - B (int): amplitude of the sine. Default is 1
 
     Returns
     --------
     - T (np.ndarray): time-dependent solution of the wave equation
     """
-    return eigenmode * (np.cos(c * frequency * t) + np.sin(c * frequency * t))
+    return A * np.cos(c * frequency * t) + B * np.sin(c * frequency * t)
