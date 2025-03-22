@@ -1,30 +1,27 @@
 import numpy as np
 
-from script.create_plot import plot_eigenfrequency, plot_eigenmodus
-from src.config import *
+from script.create_plot import plot_eigenmodus
+from src.config import NUM_MODES
 from src.eigen_solver import solve_eigenvalues
 from src.grid_discretization import (
     initialize_grid_vector,
     initialize_tridiagonal_matrix,
 )
 
-PRINT = 4
 
+def get_frequencies_list(L_list: np.ndarray, shape: str) -> np.ndarray:
+    """
+    Get the frequencies list for the given L_list
 
-def create_grid(L, shape, dx=0.01):
-    v = initialize_grid_vector(L, shape=shape)
-    m = initialize_tridiagonal_matrix(v, L, sparse=True)
-    return m
+    Params
+    -------
+    - L_list (np.ndarray): list of L values
+    - shape (str): shape of the grid
 
-
-def eigenvalues(m):
-    frequencies, eigenvectors = solve_eigenvalues(m, num_eigen=6)
-    return frequencies[:PRINT], eigenvectors[:, :PRINT]
-
-
-def main():
-    shape = "rectangle"
-    L_list = np.linspace(10, 100, 5).astype(int)
+    Returns
+    --------
+    - frequencies_list (np.ndarray): list of frequencies
+    """
     N = len(L_list)
     frequencies_list = np.zeros((N, NUM_MODES), dtype=float)
 
@@ -38,11 +35,4 @@ def main():
             eigenvectors[:, 0].reshape(L, 2 * L if shape == "rectangle" else L).real
         )
         plot_eigenmodus(L, eigenmode, shape, save_img=True)
-
-    mean_freq = np.mean(frequencies_list, axis=1)
-    plot_eigenfrequency(L_list, mean_freq, shape, save_img=True)
-    return
-
-
-if __name__ == "__main__":
-    main()
+    return frequencies_list
