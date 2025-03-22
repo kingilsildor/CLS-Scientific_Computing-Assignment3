@@ -3,6 +3,8 @@ import scipy as sp
 from numba import njit
 from scipy.sparse import csr_matrix
 
+from src.config import DIAGONAL_VALUE, OFF_DIAGONAL_VALUE
+
 
 def initialize_grid(N: int, value: int | float = 0.0) -> np.ndarray:
     """
@@ -28,7 +30,7 @@ def initialize_grid(N: int, value: int | float = 0.0) -> np.ndarray:
 
 
 @njit
-def _fill_neighbours(new_A, A) -> np.ndarray:
+def _fill_neighbours(M, N) -> np.ndarray:
     """
     Fill the neighbors of a given matrix A
 
@@ -41,23 +43,23 @@ def _fill_neighbours(new_A, A) -> np.ndarray:
     --------
     - new_A (np.ndarray): matrix with neighbors filled
     """
-    N = A.shape[0]
+    matrix = np.zeros((M * N, M * N))
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-    for x in range(N):
+    for x in range(M):
         for y in range(N):
-            if A[x, y] == 1:
-                current_index = x * N + y
+            index = x * N + y
 
-                for dx, dy in directions:
-                    nx, ny = x + dx, y + dy
-                    if 0 <= nx < N and 0 <= ny < N and A[nx, ny] == 1:
-                        neighbor_index = nx * N + ny
-                        new_A[current_index, neighbor_index] = 1
-    return new_A
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
+
+                if 0 <= nx < M and 0 <= ny < N:
+                    neighbor_index = nx * N + ny
+                    matrix[index, neighbor_index] = OFF_DIAGONAL_VALUE
+    return matrix
 
 
 def initialize_tridiagonal_matrix(
-    vector: np.ndarray, sparse: bool = True
+    vector: np.ndarray, L: int, sparse: bool = True
 ) -> np.ndarray | sp.sparse._csr.csr_matrix:
     """
     Initialize a tridiagonal matrix from a given vector
@@ -72,11 +74,10 @@ def initialize_tridiagonal_matrix(
     - matrix (np.ndarray | sp.sparse._csr.csr_matrix): tridiagonal matrix of the 5-point stencil
     """
     N = vector.shape[0]
-    side = int(np.sqrt(N))
-    matrix = vector.flatten().reshape(side, side)
+    rows, cols = L, int(N / L)
 
-    stencil_matrix = -4 * np.eye(N, dtype=int)
-    stencil_matrix = _fill_neighbours(stencil_matrix, matrix)
+    stencil_matrix = _fill_neighbours(rows, cols)
+    np.fill_diagonal(stencil_matrix, DIAGONAL_VALUE)
 
     if sparse:
         stencil_matrix = csr_matrix(stencil_matrix)
@@ -84,49 +85,36 @@ def initialize_tridiagonal_matrix(
     return stencil_matrix
 
 
-def initialize_grid_vector(
-    N: int, L: int, value: int | float = 1.0, shape: str = "square"
-) -> np.ndarray:
+def initialize_grid_vector(L: int, shape: str = "square") -> np.ndarray:
     """
-    Initialize a grid of size N x N with a given value in a specific shape
+    Initialize a grid of size L x L with a given value in a specific shape
 
     Params
     -------
-    - N (int): size of the grid
     - L (int): size of the shape
-    - value (int | float): value to fill the grid with. Default is 1.0
     - shape (str): shape of the grid. Default is 'square'. Choose from 'square', 'rectangle', 'circle'
 
     Returns
     --------
     - vector (np.ndarray): grid of size N x N as a vector of size N^2 x 1
     """
-    if isinstance(value, int):
-        value = float(value)
-    if not isinstance(value, float):
-        raise ValueError("Value should be an integer or a float")
-
-    matrix = np.zeros((N, N))
 
     if shape == "square":
-        start = (N - L) // 2
-        end = start + L
-        matrix[start:end, start:end] = value
+        matrix = np.ones((L, L))
     elif shape == "rectangle":
-        start_x = (N - L) // 2
-        end_x = start_x + L
-        start_y = (N - 2 * L) // 2
-        end_y = start_y + 2 * L
-        matrix[start_x:end_x, start_y:end_y] = value
+        matrix = np.ones((L, 2 * L))
     elif shape == "circle":
-        x, y = np.ogrid[:N, :N]
-        mask = (x - N // 2) ** 2 + (y - N // 2) ** 2 <= (L // 2) ** 2
-        matrix[mask] = value
+        matrix = np.zeros((L, L))
+
+        y, x = np.ogrid[:L, :L]
+        center = (L - 1) / 2
+        radius = L / 2
+        mask = (x - center) ** 2 + (y - center) ** 2 <= radius**2
+        matrix[mask] = 1
     else:
         raise ValueError("Invalid shape. Choose from 'square', 'rectangle', 'circle'")
 
     vector = matrix.flatten().reshape(-1, 1)
-    assert vector.shape == (N * N, 1)
     return vector
 
 
