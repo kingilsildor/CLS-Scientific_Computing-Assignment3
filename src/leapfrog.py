@@ -11,7 +11,33 @@ from src.config import (
 )
 
 
-def leapfrog(T, F_x, k, delta_t=0.01, m=1, initial_v=None, F_t=None):
+def leapfrog(
+    T: int,
+    F_x,
+    k: float,
+    delta_t: float = 0.01,
+    m: float = 1,
+    initial_v=None,
+    F_t=None,
+):
+    """
+    Run the Leapfrog method for a given time period T, force equation F_x, spring constant k and time step delta_t
+
+    Params
+    -------
+    - T (int): the time period to run the method for
+    - F_x (function): the force equation
+    - k (float): the spring constant
+    - delta_t (float): the time step size
+    - m (float): the mass of the object
+    - initial_v (str): the initial velocity, can be either none or "zero" if we want to set v_1/2 = 0. Default is None
+    - F_t (function): the external force. Default is None
+
+    Returns
+    --------
+    - x_list (np.ndarray): the list of positions over time
+    - v_list (np.ndarray): the list of velocities over time at half steps
+    """
     # Get number of timesteps and initialise arrays
     num_time_steps = int(T / delta_t)
 
@@ -41,7 +67,10 @@ def leapfrog(T, F_x, k, delta_t=0.01, m=1, initial_v=None, F_t=None):
     return x_list, v_list
 
 
-def exact_position(t, k, m):
+def exact_position(t: float, k: float, m: float):
+    """
+    Calculate the exact position of the object at time t given the spring constant k and mass m
+    """
     A = 1
     omega = np.sqrt(k / m)
     phi = np.pi / 2
@@ -49,7 +78,10 @@ def exact_position(t, k, m):
     return A * np.sin(omega * t + phi)
 
 
-def exact_velocity(t, k, m):
+def exact_velocity(t: float, k: float, m: float):
+    """
+    Calculate the exact velocity of the object at time t given the spring constant k and mass m
+    """
     A = 1
     omega = np.sqrt(k / m)
     phi = np.pi / 2
@@ -58,8 +90,25 @@ def exact_velocity(t, k, m):
 
 
 def plot_leapfrog_various_k(
-    positions, velocities, k_values, T, delta_t=0.01, save=False
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    k_values: list,
+    T: int,
+    delta_t: float = 0.01,
+    save: bool = False,
 ):
+    """
+    Plot the position and velocity over time for various spring constants k
+
+    Params
+    -------
+    - positions (np.ndarray): the list of positions over time for each k
+    - velocities (np.ndarray): the list of velocities over time for each k
+    - k_values (list): the list of spring constants
+    - T (int): the time period the method was run for
+    - delta_t (float): the time step size. Default is 0.01
+    - save (bool): whether to save the plot
+    """
     t_position = np.linspace(0, T, len(positions[0]))
     t_velocity = np.linspace(delta_t / 2, T + delta_t / 2, len(positions[0]))
     colors = ["r", "g", "y"]
@@ -91,7 +140,28 @@ def plot_leapfrog_various_k(
     plt.show()
 
 
-def plot_leapfrog_errors(positions, velocities, k, T, delta_t=0.01, m=1, save=False):
+def plot_leapfrog_errors(
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    k: float,
+    T: int,
+    delta_t: float = 0.01,
+    m: float = 1,
+    save: bool = False,
+):
+    """
+    Plot the error in position and velocity over time for the Leapfrog method for two different initial velocities
+
+    Params
+    -------
+    - positions (np.ndarray): the list of positions over time for different initial velocities
+    - velocities (np.ndarray): the list of velocities over time for different initial velocities
+    - k (int): the spring constant
+    - T (int): the time period the method was run for
+    - delta_t (float): the time step size. Default is 0.01
+    - m (float): the mass of the object. Default is 1
+    - save (bool): whether to save the plot
+    """
     fig, axes = plt.subplots(2, 1, figsize=FIG_SIZE, sharex=True)
     fig.suptitle("Error in Position and Velocity over Time", fontsize=FIG_TITLE_SIZE)
 
@@ -142,7 +212,26 @@ def plot_leapfrog_errors(positions, velocities, k, T, delta_t=0.01, m=1, save=Fa
     plt.show()
 
 
-def plot_leapfrog_errors_start_end(positions, k, T, delta_t=0.01, m=1, save=False):
+def plot_leapfrog_errors_start_end(
+    positions: np.ndarray,
+    k: float,
+    T: int,
+    delta_t: float = 0.01,
+    m: float = 1,
+    save: bool = False,
+):
+    """
+    Plot the position over time for the Leapfrog method for two different initial velocities for the first and last 5 seconds
+
+    Params
+    -------
+    - positions (np.ndarray): the list of positions over time for different initial velocities
+    - k (int): the spring constant
+    - T (int): the time period the method was run for
+    - delta_t (float): the time step size. Default is 0.01
+    - m (float): the mass of the object. Default is 1
+    - save (bool): whether to save the plot
+    """
     t_position = np.linspace(0, T, len(positions[0]))
     idx = int(5 / delta_t)
 
@@ -205,8 +294,29 @@ def plot_leapfrog_errors_start_end(positions, k, T, delta_t=0.01, m=1, save=Fals
 
 
 def plot_leapfrog_driving_force(
-    positions, velocities, omegas, T, delta_t=0.01, k=1, m=1, save=False
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    omegas: list,
+    T: int,
+    delta_t: float = 0.01,
+    k: float = 1,
+    m: float = 1,
+    save: bool = False,
 ):
+    """
+    Plot the position, velocity and phase space for the Leapfrog method with a driving force for three different driving frequencies
+
+    Params
+    -------
+    - positions (np.ndarray): the list of positions over time for different driving frequencies
+    - velocities (np.ndarray): the list of velocities over time for different driving frequencies
+    - omegas (list): the list of driving frequencies
+    - T (int): the time period the method was run for
+    - delta_t (float): the time step size. Default is 0.01
+    - k (float): the spring constant. Default is 1
+    - m (float): the mass of the object. Default is 1
+    - save (bool): whether to save the plot
+    """
     fig, axes = plt.subplots(3, 3, figsize=(10, 10))
     colors = ["g", "y", "r"]
     omega = (k / m) ** 0.5
@@ -271,7 +381,26 @@ def plot_leapfrog_driving_force(
     plt.show()
 
 
-def plot_leapfrog_phase_plots(positions, velocities, omegas, k=1, m=1, save=False):
+def plot_leapfrog_phase_plots(
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    omegas: list,
+    k: float = 1,
+    m: float = 1,
+    save: bool = False,
+):
+    """
+    Plot the phase diagrams for the Leapfrog method for different driving frequencies
+
+    Params
+    -------
+    - positions (np.ndarray): the list of positions over time for different driving frequencies
+    - velocities (np.ndarray): the list of velocities over time for different driving frequencies
+    - omegas (list): the list of driving frequencies
+    - k (float): the spring constant. Default is 1
+    - m (float): the mass of the object. Default is 1
+    - save (bool): whether to save the plot
+    """
     fig, axes = plt.subplots(2, 2, figsize=(10, 10))
     fig.suptitle(
         "Phase Diagrams for Different Driving Frequencies", fontsize=FIG_TITLE_SIZE
