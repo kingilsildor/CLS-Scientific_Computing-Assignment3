@@ -38,32 +38,28 @@ def plot_leapfrog_various_k(positions, velocities, k_values, T, save=False):
     t = np.linspace(0, T, len(positions[0]))
     colors = ["r", "g", "y"]
 
-    # Positions
-    plt.figure(figsize=FIG_SIZE)
+    fig, axes = plt.subplots(2, 1, figsize=FIG_SIZE, sharex=True)
+    fig.suptitle("Position and Velocity over Time")
 
     for i, k in enumerate(k_values):
-        plt.plot(t, positions[i], label=f"k = {k}", color=colors[i])
-
-    plt.title("Position vs Time")
-    plt.xlabel("Time")
-    plt.ylabel("Position")
-    plt.legend()
-    if save:
-        plt.savefig("results/leapfrog_position.png", dpi=FIG_DPI, bbox_inches="tight")
-    plt.show()
-
-    # Velocities
-    plt.figure(figsize=FIG_SIZE)
+        axes[0].plot(t, positions[i], label=f"k = {k}", color=colors[i])
+    axes[0].set_ylabel("Position")
+    axes[0].legend()
+    axes[0].grid()
 
     for i, k in enumerate(k_values):
-        plt.plot(t, velocities[i], label=f"k = {k}", color=colors[i])
+        axes[1].plot(t, velocities[i], label=f"k = {k}", color=colors[i])
 
-    plt.title("Velocity vs Time")
-    plt.xlabel("Time")
-    plt.ylabel("Velocity")
-    plt.legend()
+    axes[1].set_xlabel("Time")
+    axes[1].set_ylabel("Velocity")
+    axes[1].legend()
+    axes[1].grid()
+
+    plt.tight_layout()
     if save:
-        plt.savefig("results/leapfrog_velocity.png", dpi=FIG_DPI, bbox_inches="tight")
+        plt.savefig(
+            "results/leapfrog_position_velocity.png", dpi=FIG_DPI, bbox_inches="tight"
+        )
     plt.show()
 
 
