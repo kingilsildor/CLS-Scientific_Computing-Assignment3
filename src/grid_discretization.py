@@ -58,6 +58,9 @@ def _fill_neighbours(M, N) -> np.ndarray:
     return matrix
 
 
+# TODO fix circle
+
+
 def initialize_tridiagonal_matrix(
     vector: np.ndarray, L: int, sparse: bool = True
 ) -> np.ndarray | sp.sparse._csr.csr_matrix:
@@ -67,11 +70,12 @@ def initialize_tridiagonal_matrix(
     Params
     -------
     - vector (np.ndarray): vector to initialize the tridiagonal matrix from
+    - L (int): size of the grid
     - sparse (bool): whether to return a sparse matrix. Default is True
 
     Returns
     --------
-    - matrix (np.ndarray | sp.sparse._csr.csr_matrix): tridiagonal matrix of the 5-point stencil
+    - stencil_matrix (np.ndarray | sp.sparse._csr.csr_matrix): tridiagonal matrix of the 5-point stencil
     """
     N = vector.shape[0]
     rows, cols = L, int(N / L)
@@ -82,6 +86,9 @@ def initialize_tridiagonal_matrix(
     if sparse:
         stencil_matrix = csr_matrix(stencil_matrix)
 
+    # Multiply by the spacial step size
+    h = 1 / L
+    stencil_matrix /= h**2
     return stencil_matrix
 
 
@@ -122,4 +129,3 @@ if __name__ == "__main__":
     N = 100
     matrix = initialize_tridiagonal_matrix(N)
     vector = initialize_grid_vector(N, 20, 1.0, "circle")
-    print(matrix.shape, vector.shape)
