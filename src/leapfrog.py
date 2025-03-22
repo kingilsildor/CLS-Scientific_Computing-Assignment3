@@ -229,7 +229,6 @@ def plot_leapfrog_driving_force(
             rf"Position vs Time $\omega_{{drive}} = {omegas[i] / omega:.1f}\omega$"
         )
         axes[0][i].set_xlabel("Time")
-        axes[0][i].set_ylabel("Position")
         axes[0][i].legend()
         axes[0][i].grid()
 
@@ -248,7 +247,6 @@ def plot_leapfrog_driving_force(
             rf"Velocity vs Time $\omega_{{drive}} = {omegas[i] / omega:.1f}\omega$"
         )
         axes[1][i].set_xlabel("Time")
-        axes[1][i].set_ylabel("Velocity")
         axes[1][i].legend()
         axes[1][i].grid()
 
@@ -259,12 +257,44 @@ def plot_leapfrog_driving_force(
             rf"Phase Space $\omega_{{drive}} = {omegas[i] / omega:.1f}\omega$"
         )
         axes[2][i].set_xlabel("Position")
-        axes[2][i].set_ylabel("Velocity")
         axes[2][i].grid()
+
+    axes[0][0].set_ylabel("Position")
+    axes[1][0].set_ylabel("Velocity")
+    axes[2][0].set_ylabel("Velocity")
 
     plt.tight_layout()
     if save:
         plt.savefig(
             "results/leapfrog_driving_force.png", dpi=FIG_DPI, bbox_inches="tight"
+        )
+    plt.show()
+
+
+def plot_leapfrog_phase_plots(positions, velocities, omegas, k=1, m=1, save=False):
+    fig, axes = plt.subplots(2, 2, figsize=(10, 10))
+    fig.suptitle(
+        "Phase Diagrams for Different Driving Frequencies", fontsize=FIG_TITLE_SIZE
+    )
+    colors = ["g", "y", "r", "gold"]
+    omega = (k / m) ** 0.5
+
+    for i, ax in enumerate(axes.flat):
+        ax.plot(
+            positions[i],
+            velocities[i],
+            color=colors[i],
+            label=rf"$\omega_{{drive}} = {omegas[i] / omega:.1f}\omega$",
+        )
+        ax.set_xlabel("Position", fontsize=FIG_LABEL_SIZE)
+        ax.set_ylabel("Velocity", fontsize=FIG_LABEL_SIZE)
+        ax.tick_params(axis="both", labelsize=FIG_TICK_SIZE)
+        ax.legend(fontsize=FIG_LEGEND_SIZE)
+        ax.grid()
+
+    plt.tight_layout()
+    if save:
+        plt.savefig(
+            "results/leapfrog_phase_plots.png", dpi=FIG_DPI, bbox_inches="tight"
         )
     plt.show()
