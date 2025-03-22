@@ -41,6 +41,22 @@ def leapfrog(T, F_x, k, delta_t=0.01, m=1, initial_v=None, F_t=None):
     return x_list, v_list
 
 
+def exact_position(t, k, m):
+    A = 1
+    omega = np.sqrt(k / m)
+    phi = np.pi / 2
+
+    return A * np.sin(omega * t + phi)
+
+
+def exact_velocity(t, k, m):
+    A = 1
+    omega = np.sqrt(k / m)
+    phi = np.pi / 2
+
+    return A * omega * np.cos(omega * t + phi)
+
+
 def plot_leapfrog_various_k(positions, velocities, k_values, T, save=False):
     t = np.linspace(0, T, len(positions[0]))
     colors = ["r", "g", "y"]
@@ -75,13 +91,6 @@ def plot_leapfrog_errors(positions, velocities, k, T, delta_t=0.01, m=1, save=Fa
     # Plot position errors
     t_position = np.linspace(0, T, len(positions[0]))
 
-    def exact_position(t, k, m):
-        A = 1
-        omega = np.sqrt(k / m)
-        phi = np.pi / 2
-
-        return A * np.sin(omega * t + phi)
-
     plt.figure(figsize=FIG_SIZE)
     plt.plot(
         t_position,
@@ -95,10 +104,12 @@ def plot_leapfrog_errors(positions, velocities, k, T, delta_t=0.01, m=1, save=Fa
         label=r"$v_{1/2} = 0$",
         color="g",
     )
-    plt.title("Error in Position vs Time")
-    plt.xlabel("Time")
-    plt.ylabel("Error in Position")
-    plt.legend()
+    plt.title("Error in Position vs Time", fontsize=FIG_TITLE_SIZE)
+    plt.xlabel("Time", fontsize=FIG_LABEL_SIZE)
+    plt.ylabel("Error in Position", fontsize=FIG_LABEL_SIZE)
+    plt.tick_params(axis="both", labelsize=FIG_TICK_SIZE)
+    plt.legend(fontsize=FIG_LEGEND_SIZE)
+    plt.grid()
     if save:
         plt.savefig(
             "results/leapfrog_position_errors.png", dpi=FIG_DPI, bbox_inches="tight"
@@ -107,13 +118,6 @@ def plot_leapfrog_errors(positions, velocities, k, T, delta_t=0.01, m=1, save=Fa
 
     # Plot velocity errors
     t_velocity = np.linspace(delta_t / 2, T + delta_t / 2, len(positions[0]))
-
-    def exact_velocity(t, k, m):
-        A = 1
-        omega = np.sqrt(k / m)
-        phi = np.pi / 2
-
-        return A * omega * np.cos(omega * t + phi)
 
     plt.figure(figsize=FIG_SIZE)
     plt.plot(
@@ -128,12 +132,69 @@ def plot_leapfrog_errors(positions, velocities, k, T, delta_t=0.01, m=1, save=Fa
         label=r"$v_{1/2} = 0$",
         color="g",
     )
-    plt.title("Error in Velocity vs Time")
-    plt.xlabel("Time")
-    plt.ylabel("Error in Velocity")
-    plt.legend()
+    plt.title("Error in Velocity vs Time", fontsize=FIG_TITLE_SIZE)
+    plt.xlabel("Time", fontsize=FIG_LABEL_SIZE)
+    plt.ylabel("Error in Velocity", fontsize=FIG_LABEL_SIZE)
+    plt.tick_params(axis="both", labelsize=FIG_TICK_SIZE)
+    plt.legend(fontsize=FIG_LEGEND_SIZE)
+    plt.grid()
     if save:
         plt.savefig(
             "results/leapfrog_velocity_errors.png", dpi=FIG_DPI, bbox_inches="tight"
         )
+    plt.show()
+
+
+def plot_leapfrog_errors_start_end(positions, k, T, delta_t=0.01, m=1, save=False):
+    t_position = np.linspace(0, T, len(positions[0]))
+    idx = int(5 / delta_t)
+
+    # Plot first 5 seconds of position
+    plt.plot(
+        t_position[:idx],
+        positions[0][:idx],
+        label=r"Calculated ($v_{1/2}$ Average)",
+        color="y",
+    )
+    plt.plot(
+        t_position[:idx],
+        positions[1][:idx],
+        label=r"Calculated ($v_{1/2} = 0$)",
+        color="g",
+    )
+    plt.plot(
+        t_position[:idx],
+        exact_position(t_position, k, m)[:idx],
+        label="Exact",
+        color="r",
+    )
+    plt.title("Position vs Time")
+    plt.xlabel("Time")
+    plt.ylabel("Position")
+    plt.legend()
+    plt.show()
+
+    # Plot last 5 seconds of position
+    plt.plot(
+        t_position[-idx:],
+        positions[0][-idx:],
+        label=r"Calculated ($v_{1/2}$ Average)",
+        color="y",
+    )
+    plt.plot(
+        t_position[-idx:],
+        positions[1][-idx:],
+        label=r"Calculated ($v_{1/2} = 0$)",
+        color="g",
+    )
+    plt.plot(
+        t_position[-idx:],
+        exact_position(t_position, k, m)[-idx:],
+        label="Exact",
+        color="r",
+    )
+    plt.title("Position vs Time")
+    plt.xlabel("Time")
+    plt.ylabel("Position")
+    plt.legend()
     plt.show()
