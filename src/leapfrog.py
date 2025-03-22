@@ -1,7 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.config import FIG_DPI, FIG_SIZE
+from src.config import (
+    FIG_DPI,
+    FIG_LABEL_SIZE,
+    FIG_LEGEND_SIZE,
+    FIG_SIZE,
+    FIG_TICK_SIZE,
+    FIG_TITLE_SIZE,
+)
 
 
 def leapfrog(T, F_x, k, delta_t=0.01, m=1, initial_v=None, F_t=None):
@@ -39,20 +46,21 @@ def plot_leapfrog_various_k(positions, velocities, k_values, T, save=False):
     colors = ["r", "g", "y"]
 
     fig, axes = plt.subplots(2, 1, figsize=FIG_SIZE, sharex=True)
-    fig.suptitle("Position and Velocity over Time")
+    fig.suptitle("Position and Velocity over Time", fontsize=FIG_TITLE_SIZE)
 
     for i, k in enumerate(k_values):
         axes[0].plot(t, positions[i], label=f"k = {k}", color=colors[i])
-    axes[0].set_ylabel("Position")
-    axes[0].legend()
+    axes[0].set_ylabel("Position", fontsize=FIG_LABEL_SIZE)
+    axes[0].legend(fontsize=FIG_LEGEND_SIZE)
     axes[0].grid()
 
     for i, k in enumerate(k_values):
         axes[1].plot(t, velocities[i], label=f"k = {k}", color=colors[i])
 
-    axes[1].set_xlabel("Time")
-    axes[1].set_ylabel("Velocity")
-    axes[1].legend()
+    axes[1].set_xlabel("Time", fontsize=FIG_LABEL_SIZE)
+    axes[1].set_ylabel("Velocity", fontsize=FIG_LABEL_SIZE)
+    axes[1].tick_params(axis="both", labelsize=FIG_TICK_SIZE)
+    axes[1].legend(fontsize=FIG_LEGEND_SIZE)
     axes[1].grid()
 
     plt.tight_layout()
