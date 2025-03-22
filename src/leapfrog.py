@@ -57,21 +57,25 @@ def exact_velocity(t, k, m):
     return A * omega * np.cos(omega * t + phi)
 
 
-def plot_leapfrog_various_k(positions, velocities, k_values, T, save=False):
-    t = np.linspace(0, T, len(positions[0]))
+def plot_leapfrog_various_k(
+    positions, velocities, k_values, T, delta_t=0.01, save=False
+):
+    t_position = np.linspace(0, T, len(positions[0]))
+    t_velocity = np.linspace(delta_t / 2, T + delta_t / 2, len(positions[0]))
     colors = ["r", "g", "y"]
 
     fig, axes = plt.subplots(2, 1, figsize=FIG_SIZE, sharex=True)
     fig.suptitle("Position and Velocity over Time", fontsize=FIG_TITLE_SIZE)
 
     for i, k in enumerate(k_values):
-        axes[0].plot(t, positions[i], label=f"k = {k}", color=colors[i])
+        axes[0].plot(t_position, positions[i], label=f"k = {k}", color=colors[i])
     axes[0].set_ylabel("Position", fontsize=FIG_LABEL_SIZE)
+    axes[0].tick_params(axis="y", labelsize=FIG_TICK_SIZE)
     axes[0].legend(fontsize=FIG_LEGEND_SIZE)
     axes[0].grid()
 
     for i, k in enumerate(k_values):
-        axes[1].plot(t, velocities[i], label=f"k = {k}", color=colors[i])
+        axes[1].plot(t_velocity, velocities[i], label=f"k = {k}", color=colors[i])
 
     axes[1].set_xlabel("Time", fontsize=FIG_LABEL_SIZE)
     axes[1].set_ylabel("Velocity", fontsize=FIG_LABEL_SIZE)
@@ -88,60 +92,53 @@ def plot_leapfrog_various_k(positions, velocities, k_values, T, save=False):
 
 
 def plot_leapfrog_errors(positions, velocities, k, T, delta_t=0.01, m=1, save=False):
+    fig, axes = plt.subplots(2, 1, figsize=FIG_SIZE, sharex=True)
+    fig.suptitle("Error in Position and Velocity over Time", fontsize=FIG_TITLE_SIZE)
+
     # Plot position errors
     t_position = np.linspace(0, T, len(positions[0]))
 
-    plt.figure(figsize=FIG_SIZE)
-    plt.plot(
+    axes[0].plot(
         t_position,
         exact_position(t_position, k, m) - positions[0],
         label=r"$v_{1/2} = \Delta t \cdot F(x_0) / 2m$",
         color="y",
     )
-    plt.plot(
+    axes[0].plot(
         t_position,
         exact_position(t_position, k, m) - positions[1],
         label=r"$v_{1/2} = 0$",
         color="g",
     )
-    plt.title("Error in Position vs Time", fontsize=FIG_TITLE_SIZE)
-    plt.xlabel("Time", fontsize=FIG_LABEL_SIZE)
-    plt.ylabel("Error in Position", fontsize=FIG_LABEL_SIZE)
-    plt.tick_params(axis="both", labelsize=FIG_TICK_SIZE)
-    plt.legend(fontsize=FIG_LEGEND_SIZE)
-    plt.grid()
-    if save:
-        plt.savefig(
-            "results/leapfrog_position_errors.png", dpi=FIG_DPI, bbox_inches="tight"
-        )
-    plt.show()
+    axes[0].set_ylabel("Error in Position", fontsize=FIG_LABEL_SIZE)
+    axes[0].tick_params(axis="both", labelsize=FIG_TICK_SIZE)
+    axes[0].legend(fontsize=FIG_LEGEND_SIZE)
+    axes[0].grid()
 
     # Plot velocity errors
     t_velocity = np.linspace(delta_t / 2, T + delta_t / 2, len(positions[0]))
 
-    plt.figure(figsize=FIG_SIZE)
-    plt.plot(
+    axes[1].plot(
         t_velocity,
         exact_velocity(t_velocity, k, m) - velocities[0],
         label=r"$v_{1/2} = \Delta t \cdot F(x_0) / 2m$",
         color="y",
     )
-    plt.plot(
+    axes[1].plot(
         t_velocity,
         exact_velocity(t_velocity, k, m) - velocities[1],
         label=r"$v_{1/2} = 0$",
         color="g",
     )
-    plt.title("Error in Velocity vs Time", fontsize=FIG_TITLE_SIZE)
-    plt.xlabel("Time", fontsize=FIG_LABEL_SIZE)
-    plt.ylabel("Error in Velocity", fontsize=FIG_LABEL_SIZE)
-    plt.tick_params(axis="both", labelsize=FIG_TICK_SIZE)
-    plt.legend(fontsize=FIG_LEGEND_SIZE)
-    plt.grid()
+    axes[1].set_xlabel("Time", fontsize=FIG_LABEL_SIZE)
+    axes[1].set_ylabel("Error in Velocity", fontsize=FIG_LABEL_SIZE)
+    axes[1].tick_params(axis="both", labelsize=FIG_TICK_SIZE)
+    axes[1].legend(fontsize=FIG_LEGEND_SIZE)
+    axes[1].grid()
+
+    plt.tight_layout()
     if save:
-        plt.savefig(
-            "results/leapfrog_velocity_errors.png", dpi=FIG_DPI, bbox_inches="tight"
-        )
+        plt.savefig("results/leapfrog_errors.png", dpi=FIG_DPI, bbox_inches="tight")
     plt.show()
 
 
@@ -149,52 +146,125 @@ def plot_leapfrog_errors_start_end(positions, k, T, delta_t=0.01, m=1, save=Fals
     t_position = np.linspace(0, T, len(positions[0]))
     idx = int(5 / delta_t)
 
+    fig, axes = plt.subplots(2, 1, figsize=FIG_SIZE)
+    fig.suptitle("Position vs Time (First and Last 5 Seconds)", fontsize=FIG_TITLE_SIZE)
+
     # Plot first 5 seconds of position
-    plt.plot(
+    axes[0].plot(
         t_position[:idx],
         positions[0][:idx],
         label=r"Calculated ($v_{1/2}$ Average)",
         color="y",
     )
-    plt.plot(
+    axes[0].plot(
         t_position[:idx],
         positions[1][:idx],
         label=r"Calculated ($v_{1/2} = 0$)",
         color="g",
     )
-    plt.plot(
+    axes[0].plot(
         t_position[:idx],
         exact_position(t_position, k, m)[:idx],
         label="Exact",
         color="r",
     )
-    plt.title("Position vs Time")
-    plt.xlabel("Time")
-    plt.ylabel("Position")
-    plt.legend()
-    plt.show()
+    axes[0].set_ylabel("Position", fontsize=FIG_LABEL_SIZE)
+    axes[0].tick_params(axis="both", labelsize=FIG_TICK_SIZE)
+    axes[0].legend(fontsize=FIG_LEGEND_SIZE)
+    axes[0].grid()
 
     # Plot last 5 seconds of position
-    plt.plot(
+    axes[1].plot(
         t_position[-idx:],
         positions[0][-idx:],
         label=r"Calculated ($v_{1/2}$ Average)",
         color="y",
     )
-    plt.plot(
+    axes[1].plot(
         t_position[-idx:],
         positions[1][-idx:],
         label=r"Calculated ($v_{1/2} = 0$)",
         color="g",
     )
-    plt.plot(
+    axes[1].plot(
         t_position[-idx:],
         exact_position(t_position, k, m)[-idx:],
         label="Exact",
         color="r",
     )
-    plt.title("Position vs Time")
-    plt.xlabel("Time")
-    plt.ylabel("Position")
-    plt.legend()
+    axes[1].set_xlabel("Time", fontsize=FIG_LABEL_SIZE)
+    axes[1].set_ylabel("Position", fontsize=FIG_LABEL_SIZE)
+    axes[1].tick_params(axis="both", labelsize=FIG_TICK_SIZE)
+    axes[1].legend(fontsize=FIG_LEGEND_SIZE)
+    axes[1].grid()
+
+    plt.tight_layout()
+    if save:
+        plt.savefig("results/leapfrog_start_end.png", dpi=FIG_DPI, bbox_inches="tight")
+    plt.show()
+
+
+def plot_leapfrog_driving_force(
+    positions, velocities, omegas, T, delta_t=0.01, k=1, m=1, save=False
+):
+    fig, axes = plt.subplots(3, 3, figsize=(10, 10))
+    colors = ["g", "y", "r"]
+    omega = (k / m) ** 0.5
+
+    t_position = np.linspace(0, T, len(positions[0]))
+    t_velocity = np.linspace(delta_t / 2, T + delta_t / 2, len(positions[0]))
+
+    # Plot the positions
+    for i, position in enumerate(positions):
+        axes[0][i].plot(
+            t_position,
+            exact_position(t_position, k, m),
+            color=colors[1],
+            label="Without driving force",
+        )
+        axes[0][i].plot(
+            t_position, position, color=colors[0], label="With driving force"
+        )
+        axes[0][i].set_title(
+            rf"Position vs Time $\omega_{{drive}} = {omegas[i] / omega:.1f}\omega$"
+        )
+        axes[0][i].set_xlabel("Time")
+        axes[0][i].set_ylabel("Position")
+        axes[0][i].legend()
+        axes[0][i].grid()
+
+    # Plot the velocities
+    for i, velocity in enumerate(velocities):
+        axes[1][i].plot(
+            t_velocity,
+            exact_velocity(t_position, k, m),
+            color=colors[1],
+            label="Without driving force",
+        )
+        axes[1][i].plot(
+            t_velocity, velocity, color=colors[0], label="With driving force"
+        )
+        axes[1][i].set_title(
+            rf"Velocity vs Time $\omega_{{drive}} = {omegas[i] / omega:.1f}\omega$"
+        )
+        axes[1][i].set_xlabel("Time")
+        axes[1][i].set_ylabel("Velocity")
+        axes[1][i].legend()
+        axes[1][i].grid()
+
+    # Plot the phase space
+    for i, position in enumerate(positions):
+        axes[2][i].plot(positions[i], velocities[i], color=colors[i])
+        axes[2][i].set_title(
+            rf"Phase Space $\omega_{{drive}} = {omegas[i] / omega:.1f}\omega$"
+        )
+        axes[2][i].set_xlabel("Position")
+        axes[2][i].set_ylabel("Velocity")
+        axes[2][i].grid()
+
+    plt.tight_layout()
+    if save:
+        plt.savefig(
+            "results/leapfrog_driving_force.png", dpi=FIG_DPI, bbox_inches="tight"
+        )
     plt.show()
