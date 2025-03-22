@@ -5,7 +5,7 @@ from src.config import FIG_DPI, FIG_SIZE
 
 
 def leapfrog(T, F_x, k, delta_t=0.01, m=1, initial_v=None, F_t=None):
-    # Get number of timesteps and initials arrays
+    # Get number of timesteps and initialise arrays
     num_time_steps = int(T / delta_t)
 
     x_list = np.zeros(num_time_steps + 1)
