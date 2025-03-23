@@ -16,10 +16,10 @@ DIAGONAL_VALUE = -4.0
 OFF_DIAGONAL_VALUE = 1.0
 
 # Eigenvalue solver parameters
-NUM_MODES = 5
+NUM_MODES = 1
 NUM_EIGENVALUES = 10
-SELECT_MODE = 0
+SELECT_MODE = 2
 
 # Time-dependent solution parameters
-TIME_MAX = 30
+TIME_MAX = 10
 TIME_STEPS = 100

@@ -2,43 +2,49 @@ import glob
 import os
 
 import imageio
-import matplotlib
+import matplotlib.colors as mcolors
+import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 
-from src.config import FIG_DIR, FIG_DPI, FIG_SIZE, SCALER
+from src.config import FIG_DIR, FIG_DPI, FIG_SIZE, SELECT_MODE
 from src.eigen_solver import time_dependent_solution
 
 
-def create_seaborn_heatmap(arr: np.ndarray, ax: matplotlib.axes._axes.Axes) -> None:
+def create_seaborn_heatmap(
+    arr: np.ndarray, ax: plt.Axes, annot: bool = False, normalize: bool = False
+) -> None:
     """
-    Create a heatmap using seaborn library.
+    Create a heatmap using seaborn library with 1 always mapped to yellow.
 
     Params
     -------
     - arr (np.ndarray): array to plot
     - ax (matplotlib.axes._axes.Axes): axis to plot the heatmap
+    - annot (bool): flag to annotate the heatmap. Default is False
+    - normalize (bool): flag to normalize the heatmap. Default is False
     """
+    norm = mcolors.Normalize(vmin=min(0, arr.min()), vmax=max(1, arr.max()))
+
     sns.heatmap(
-        arr,
+        np.round(arr, 2),
         ax=ax,
         cmap="viridis",
         cbar=False,
-        annot=True,
+        annot=annot,
         square=True,
         annot_kws={"size": 8},
+        norm=norm if normalize else None,
     )
     ax.set_xticks([])
     ax.set_yticks([])
 
 
 def plot_eigenmodus(
-    plot_amount: int,
-    N: int,
     L: int,
-    frequencies: np.ndarray,
-    eigenvectors: np.ndarray,
+    eigenmode: np.ndarray,
     shape: str,
     save_img: bool = False,
 ) -> None:
@@ -47,42 +53,80 @@ def plot_eigenmodus(
 
     Params
     -------
-    - plot_amount (int): amount of eigenmodes to plot
-    - N (int): size of the grid
-    - L (int): size of the shape
-    - frequencies (np.ndarray): frequencies of the eigenvalues
-    - eigenvectors (np.ndarray): eigenvectors of the eigenvalues
+    - L (int): size of the grid
+    - eigenmode (np.ndarray): eigenmode of the matrix
+    - shape (str): shape of the grid
     - save_img (bool): flag to save the image. Default is False
     """
     if not os.path.exists(FIG_DIR):
         os.makedirs(FIG_DIR)
 
-    N_eigenvectors = eigenvectors.shape[1]
-    if plot_amount > N_eigenvectors:
-        raise ValueError(
-            f"Plot amount should be less than or equal to {N_eigenvectors}"
-        )
+    plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
+    eigenmode = eigenmode.real
+    plt.imshow(eigenmode, cmap="RdBu")
+    plt.xticks([])
+    plt.yticks([])
 
-    for i in range(plot_amount):
-        plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
-        v = eigenvectors[:, i].T.real
-        plt.imshow(v.reshape(N, N), cmap="RdBu")
-        plt.colorbar()
-        plt.title(
-            f"Eigenmode {i + 1} with frequency ${frequencies[i]:.4f}$\n {shape} shape of $L={L}$ and $N={N}$"
-        )
-        plt.tight_layout()
+    plt.tight_layout()
 
-        if save_img:
-            title = f"eigenmode_{shape}_{i + 1}.png"
-            plt.savefig(f"{FIG_DIR}{title}")
-        else:
-            plt.show()
-        plt.close()
+    if save_img:
+        title = f"eigenmode_{shape}_{L}.png"
+        plt.savefig(f"{FIG_DIR}{title}")
+    else:
+        plt.show()
+    plt.close()
+
+
+def _add_image_with_line(
+    ax: plt.Axes,
+    image_path: str,
+    xy: tuple,
+    offset: tuple = (0.5, 0.5),
+    zoom: float = 0.03,
+) -> None:
+    """
+    Add an image to the plot with a line connecting the image to the point.
+
+    Params
+    -------
+    - ax (matplotlib.axes._axes.Axes): axis to plot the image
+    - image_path (str): path to the image
+    - xy (tuple): point to plot the image
+    - offset (tuple): offset for the image. Default is (0.5, 0.5)
+    - zoom (float): zoom level for the image. Default is 0.03
+    """
+    img = mpimg.imread(image_path)
+    xy_offset = (xy[0] + offset[0], xy[1] + offset[1])
+
+    imagebox = OffsetImage(img, zoom=zoom)
+
+    ab = AnnotationBbox(imagebox, xy_offset, frameon=True, boxcoords="data", pad=0.0)
+    ax.add_artist(ab)
+
+    ax.plot([xy[0], xy_offset[0]], [xy[1], xy_offset[1]], linestyle="--", color="gray")
+
+
+def _add_images_with_lines(ax: plt.Axes, image_points: list, image_paths: list) -> None:
+    """
+    Add multiple images with lines connecting them to the plot.
+
+    Params
+    -------
+    - ax (matplotlib.axes._axes.Axes): axis to plot the images
+    - image_points (list): list of points to plot the images
+    - image_paths (list): list of paths to the images
+    """
+    # Manually offset values for the images
+    offset_one = [(25, 0.05)]
+    offset_rest = [(10, -0.07) for _ in range(len(image_points) - 1)]
+    offset_list = offset_one + offset_rest
+
+    for point, img_path, offset in zip(image_points, image_paths, offset_list):
+        _add_image_with_line(ax, img_path, point, offset=offset)
 
 
 def plot_eigenfrequency(
-    L_list, frequency_list, N: int, shape: str, save_img: bool = False
+    L_list, frequencies, shape: str, save_img: bool = False
 ) -> None:
     """
     Plot the eigenfrequencies of the matrix and save the image if specified.
@@ -95,13 +139,20 @@ def plot_eigenfrequency(
     - shape (str): shape of the grid
     - save_img (bool): flag to save the image. Default is False
     """
-    plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
-    for i, _ in enumerate(L_list):
-        plt.plot(L_list, frequency_list[:, i], label=f"Eigenmode {i + 1}")
-    plt.xlabel("$L$")
-    plt.ylabel("Frequency")
-    plt.legend()
-    plt.title(f"Eigenfrequencies {shape} shape with $N={N}$")
+    assert frequencies.shape[0] == L_list.shape[0]
+
+    _, ax = plt.subplots(figsize=FIG_SIZE, dpi=FIG_DPI)
+
+    ax.plot(L_list, frequencies, label="Eigenfrequencies", marker="o")
+    ax.set_xlabel("$L$")
+    ax.set_ylabel("Frequency ($\\lambda$) in kHz")
+    ax.set_title(f"Eigenfrequencies for a {shape} shape")
+
+    image_points = [(L_list[i], frequencies[i]) for i in range(len(L_list))]
+    image_paths = [f"{FIG_DIR}eigenmode_{shape}_{L}.png" for L in L_list]
+    _add_images_with_lines(ax, image_points, image_paths)
+
+    ax.legend()
     plt.tight_layout()
 
     if save_img:
@@ -120,7 +171,7 @@ def plot_eigenmode_animation(
     eigenfrequency,
     timepoints,
     shape: str,
-    duration: int = 10,
+    duration: int = 100,
     delete_img: bool = True,
 ) -> None:
     """
@@ -139,22 +190,27 @@ def plot_eigenmode_animation(
     if not os.path.exists(FIG_DIR):
         os.makedirs(FIG_DIR)
 
+    min = -np.max(eigenmode.real)
+    max = np.max(eigenmode.real)
+
     for i, t in enumerate(timepoints):
         plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
+        T = time_dependent_solution(c, eigenfrequency, t)
+        u = eigenmode * T
 
-        u = time_dependent_solution(c, eigenmode, eigenfrequency, t)
-
-        plt.imshow(u.real, cmap="RdBu")
+        plt.imshow(u.real, cmap="RdBu", vmin=min, vmax=max)
         plt.colorbar()
         plt.xlabel("x")
         plt.ylabel("y")
         plt.title(
-            f"t = {timepoints[i]:.1f} for frequency {eigenfrequency:.4f} and shape {shape}"
+            f"t = {timepoints[i]:.1f} for Eigenmodus {SELECT_MODE}\nFrequency ($\\lambda$)={eigenfrequency.real:.2f} kHz and shape {shape}"
         )
+
         plt.tight_layout()
         plt.savefig(f"{FIG_DIR}frame_{i:03d}.png")
         plt.close()
 
+    # Create the gif
     images = [
         imageio.imread(f"{FIG_DIR}frame_{i:03d}.png") for i in range(len(timepoints))
     ]
@@ -201,13 +257,14 @@ def plot_multiple_eigenmodes(
             v = eigenvectors[:, i].real.reshape(L, 2 * L)
         else:
             v = eigenvectors[:, i].real.reshape(L, L)
-        img = axs[i].imshow(v, cmap="RdBu", origin="lower", aspect="auto")
+        img = axs[i].imshow(v, cmap="RdBu", origin="lower", aspect="equal")
         if shape == "rectangle":
             axs[i].set_aspect(1.5)
-        fig.colorbar(img, ax=axs[i])
+        fig.colorbar(img, ax=axs[i], shrink=0.4 if shape == "rectangle" else 0.6)
 
-        current_frequency = frequencies[i] * SCALER
-        axs[i].set_title(f"Eigenmode {i + 1}\nFrequency: {current_frequency:.2f} kHz")
+        axs[i].set_title(
+            f"Eigenmode {i + 1}\nFrequency ($\\lambda$)={frequencies[i].real:.2f} kHz"
+        )
 
     plt.tight_layout()
 
