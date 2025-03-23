@@ -9,12 +9,24 @@ import numpy as np
 import seaborn as sns
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 
-from src.config import FIG_DIR, FIG_DPI, FIG_SIZE, SELECT_MODE
+from src.config import (
+    FIG_DIR,
+    FIG_DPI,
+    FIG_LABEL_SIZE,
+    FIG_SIZE,
+    FIG_TICK_SIZE,
+    FIG_TITLE_SIZE,
+    SELECT_MODE,
+)
 from src.eigen_solver import time_dependent_solution
 
 
 def create_seaborn_heatmap(
-    arr: np.ndarray, ax: plt.Axes, annot: bool = False, normalize: bool = False
+    arr: np.ndarray,
+    ax: plt.Axes,
+    annot: bool = False,
+    normalize: bool = False,
+    cmap: str = "viridis",
 ) -> None:
     """
     Create a heatmap using seaborn library with 1 always mapped to yellow.
@@ -25,13 +37,14 @@ def create_seaborn_heatmap(
     - ax (matplotlib.axes._axes.Axes): axis to plot the heatmap
     - annot (bool): flag to annotate the heatmap. Default is False
     - normalize (bool): flag to normalize the heatmap. Default is False
+    - cmap (str): colormap for the heatmap. Default is "viridis"
     """
     norm = mcolors.Normalize(vmin=min(0, arr.min()), vmax=max(1, arr.max()))
 
     sns.heatmap(
         np.round(arr, 2),
         ax=ax,
-        cmap="viridis",
+        cmap=cmap,
         cbar=False,
         annot=annot,
         square=True,
@@ -71,7 +84,7 @@ def plot_eigenmodus(
 
     if save_img:
         title = f"eigenmode_{shape}_{L}.png"
-        plt.savefig(f"{FIG_DIR}{title}")
+        plt.savefig(f"{FIG_DIR}{title}", bbox_inches="tight")
     else:
         plt.show()
     plt.close()
@@ -143,10 +156,11 @@ def plot_eigenfrequency(
 
     _, ax = plt.subplots(figsize=FIG_SIZE, dpi=FIG_DPI)
 
-    ax.plot(L_list, frequencies, label="Eigenfrequencies", marker="o")
-    ax.set_xlabel("$L$")
-    ax.set_ylabel("Frequency ($\\lambda$) in kHz")
-    ax.set_title(f"Eigenfrequencies for a {shape} shape")
+    ax.plot(L_list, frequencies, label="Mean Eigenfrequencies", marker="o")
+    ax.set_xlabel("$L$", fontsize=FIG_LABEL_SIZE)
+    ax.set_ylabel("Frequency ($\\lambda$) in kHz", fontsize=FIG_LABEL_SIZE)
+    ax.tick_params(axis="both", labelsize=FIG_TICK_SIZE)
+    ax.set_title(f"Eigenfrequencies for a {shape} shape", fontsize=FIG_TITLE_SIZE)
 
     image_points = [(L_list[i], frequencies[i]) for i in range(len(L_list))]
     image_paths = [f"{FIG_DIR}eigenmode_{shape}_{L}.png" for L in L_list]
@@ -159,7 +173,7 @@ def plot_eigenfrequency(
         if not os.path.exists(FIG_DIR):
             os.makedirs(FIG_DIR)
         title = f"eigenfrequencies_{shape}.png"
-        plt.savefig(f"{FIG_DIR}{title}")
+        plt.savefig(f"{FIG_DIR}{title}", bbox_inches="tight")
     else:
         plt.show()
     plt.close()
@@ -194,27 +208,28 @@ def plot_eigenmode_animation(
     max = np.max(eigenmode.real)
 
     for i, t in enumerate(timepoints):
-        plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
+        plt.figure(figsize=FIG_SIZE)
         T = time_dependent_solution(c, eigenfrequency, t)
         u = eigenmode * T
 
         plt.imshow(u.real, cmap="RdBu", vmin=min, vmax=max)
         plt.colorbar()
-        plt.xlabel("x")
-        plt.ylabel("y")
+        plt.xlabel("x", fontsize=FIG_LABEL_SIZE)
+        plt.ylabel("y", fontsize=FIG_LABEL_SIZE)
         plt.title(
-            f"t = {timepoints[i]:.1f} for Eigenmodus {SELECT_MODE}\nFrequency ($\\lambda$)={eigenfrequency.real:.2f} kHz and shape {shape}"
+            f"t = {timepoints[i]:.1f} for Eigenmodus {SELECT_MODE}\nFrequency ($\\lambda$)={eigenfrequency.real:.2f} kHz",
+            fontsize=FIG_TITLE_SIZE,
         )
 
         plt.tight_layout()
-        plt.savefig(f"{FIG_DIR}frame_{i:03d}.png")
+        plt.savefig(f"{FIG_DIR}frame_{i:03d}.png", bbox_inches="tight", dpi=FIG_DPI)
         plt.close()
 
     # Create the gif
     images = [
         imageio.imread(f"{FIG_DIR}frame_{i:03d}.png") for i in range(len(timepoints))
     ]
-    imageio.mimsave(f"{FIG_DIR}wave.gif", images, duration=duration)
+    imageio.mimsave(f"{FIG_DIR}{shape}_wave.gif", images, duration=duration)
 
     if delete_img:
         images = glob.glob(f"{FIG_DIR}frame_*.png")
@@ -229,6 +244,7 @@ def plot_multiple_eigenmodes(
     eigenvectors: np.ndarray,
     L: int,
     shape: str,
+    shift: int = 0,
     save_img: bool = False,
 ) -> None:
     """
@@ -241,6 +257,7 @@ def plot_multiple_eigenmodes(
     - eigenvectors (np.ndarray): eigenvectors of the eigenvalues
     - L (int): size of the shape
     - shape (str): shape of the grid
+    - shift (int): shift the eigenmode index. Default is 0
     - save_img (bool): flag to save the image. Default is False
     """
     N_eigenvectors = eigenvectors.shape[1]
@@ -250,20 +267,22 @@ def plot_multiple_eigenmodes(
         )
 
     x, y = FIG_SIZE
-    x = x * 2
-    fig, axs = plt.subplots(1, amount, figsize=(x, y), dpi=FIG_DPI)
+    x = x * 3
+    fig, ax = plt.subplots(1, amount, figsize=(x, y))
     for i in range(amount):
         if shape == "rectangle":
             v = eigenvectors[:, i].real.reshape(L, 2 * L)
         else:
             v = eigenvectors[:, i].real.reshape(L, L)
-        img = axs[i].imshow(v, cmap="RdBu", origin="lower", aspect="equal")
+        img = ax[i].imshow(v, cmap="RdBu", origin="lower", aspect="equal")
         if shape == "rectangle":
-            axs[i].set_aspect(1.5)
-        fig.colorbar(img, ax=axs[i], shrink=0.4 if shape == "rectangle" else 0.6)
+            ax[i].set_aspect(1.5)
+        fig.colorbar(img, ax=ax[i])
 
-        axs[i].set_title(
-            f"Eigenmode {i + 1}\nFrequency ($\\lambda$)={frequencies[i].real:.2f} kHz"
+        ax[i].tick_params(axis="both", labelsize=FIG_TICK_SIZE * 2)
+        ax[i].set_title(
+            f"Eigenmode {i + 1 + shift}\nFrequency ($\\lambda$)={frequencies[i].real:.2f} kHz",
+            fontsize=FIG_TITLE_SIZE * 1.4,
         )
 
     plt.tight_layout()
@@ -272,7 +291,7 @@ def plot_multiple_eigenmodes(
         if not os.path.exists(FIG_DIR):
             os.makedirs(FIG_DIR)
         title = f"{shape}_eigenmodes.png"
-        plt.savefig(f"{FIG_DIR}{title}")
+        plt.savefig(f"{FIG_DIR}{title}", bbox_inches="tight", dpi=FIG_DPI)
     else:
         plt.show()
     plt.close()

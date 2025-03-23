@@ -5,10 +5,10 @@ FIG_TITLE_SIZE = 20
 FIG_LABEL_SIZE = 16
 FIG_TICK_SIZE = 14
 FIG_LEGEND_SIZE = 12
-FIG_DIR = "results/"
+FIG_DIR = "new_results/"
 
 # Interface
-PLOTS_AMOUNT = 4
+PLOTS_AMOUNT = 3
 SCALER = 1000
 
 # 5-point stencil values

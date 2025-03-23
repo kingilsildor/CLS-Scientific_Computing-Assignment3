@@ -32,7 +32,7 @@ def get_frequencies_list(L_list: np.ndarray, shape: str) -> np.ndarray:
 
         frequencies_list[i] = frequencies.real
         eigenmode = (
-            eigenvectors[:, 0].reshape(L, 2 * L if shape == "rectangle" else L).real
+            eigenvectors[:, 0].reshape(L, L if shape != "rectangle" else 2 * L).real
         )
         plot_eigenmodus(L, eigenmode, shape, save_img=True)
     return frequencies_list
