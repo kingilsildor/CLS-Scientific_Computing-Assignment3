@@ -77,7 +77,24 @@ def plot_eigenmodus(
     plt.close()
 
 
-def _add_image_with_line(ax, image_path, xy, offset=(0.5, 0.5), zoom=0.03):
+def _add_image_with_line(
+    ax: plt.Axes,
+    image_path: str,
+    xy: tuple,
+    offset: tuple = (0.5, 0.5),
+    zoom: float = 0.03,
+) -> None:
+    """
+    Add an image to the plot with a line connecting the image to the point.
+
+    Params
+    -------
+    - ax (matplotlib.axes._axes.Axes): axis to plot the image
+    - image_path (str): path to the image
+    - xy (tuple): point to plot the image
+    - offset (tuple): offset for the image. Default is (0.5, 0.5)
+    - zoom (float): zoom level for the image. Default is 0.03
+    """
     img = mpimg.imread(image_path)
     xy_offset = (xy[0] + offset[0], xy[1] + offset[1])
 
@@ -89,10 +106,21 @@ def _add_image_with_line(ax, image_path, xy, offset=(0.5, 0.5), zoom=0.03):
     ax.plot([xy[0], xy_offset[0]], [xy[1], xy_offset[1]], linestyle="--", color="gray")
 
 
-def _add_images_with_lines(ax, image_points, image_paths):
+def _add_images_with_lines(ax: plt.Axes, image_points: list, image_paths: list) -> None:
+    """
+    Add multiple images with lines connecting them to the plot.
+
+    Params
+    -------
+    - ax (matplotlib.axes._axes.Axes): axis to plot the images
+    - image_points (list): list of points to plot the images
+    - image_paths (list): list of paths to the images
+    """
+    # Manually offset values for the images
     offset_one = [(25, 0.05)]
     offset_rest = [(10, -0.07) for _ in range(len(image_points) - 1)]
     offset_list = offset_one + offset_rest
+
     for point, img_path, offset in zip(image_points, image_paths, offset_list):
         _add_image_with_line(ax, img_path, point, offset=offset)
 
@@ -113,9 +141,8 @@ def plot_eigenfrequency(
     """
     assert frequencies.shape[0] == L_list.shape[0]
 
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots(figsize=FIG_SIZE, dpi=FIG_DPI)
 
-    # plt.figure(figsize=FIG_SIZE, dpi=FIG_DPI)
     ax.plot(L_list, frequencies, label="Eigenfrequencies", marker="o")
     ax.set_xlabel("$L$")
     ax.set_ylabel("Frequency ($\\lambda$) in kHz")
@@ -183,6 +210,7 @@ def plot_eigenmode_animation(
         plt.savefig(f"{FIG_DIR}frame_{i:03d}.png")
         plt.close()
 
+    # Create the gif
     images = [
         imageio.imread(f"{FIG_DIR}frame_{i:03d}.png") for i in range(len(timepoints))
     ]

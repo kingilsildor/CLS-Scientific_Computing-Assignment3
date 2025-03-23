@@ -29,7 +29,6 @@ def solve_eigenvalues(
     matrix: np.ndarray | sp.sparse._csr.csr_matrix,
     model: str = "None",
     num_eigen: int = NUM_EIGENVALUES,
-    side: str = "SM",
 ) -> tuple:
     """
     Solve the eigenvalues of a matrix using the specified model
@@ -39,12 +38,6 @@ def solve_eigenvalues(
     - matrix (np.ndarray | sp.sparse._csr.csr_matrix): matrix to solve the eigenvalues for
     - model (str): model to use for solving the eigenvalues. Choose from 'None' or 'h'. Default is 'None'
     - num_modes (int): number of modes to solve. Default is NUM_MODES
-    - side (str): side of the eigenvalues to solve. Choose from
-        - LM: Largest (in magnitude) eigenvalues.
-        - SM: Smallest (in magnitude) eigenvalues.
-        - LA: Largest (algebraic) eigenvalues.
-        - SA: Smallest (algebraic) eigenvalues.
-        - BE: Half (k/2) from each end of the spectrum.
 
     Returns
     --------
@@ -53,16 +46,13 @@ def solve_eigenvalues(
     """
     start_time = time.time()
 
-    assert side in ["LM", "SM", "LA", "SA", "BE"], (
-        "Invalid side. Choose from LM, SM, LA, SA, BE"
-    )
-
+    # Model uses the SM (smallest magnitude) eigenvalues
     if model == "None":
         print("Solving the eigenvalues using regular solver for matrix")
         eigenvalues, eigenvectors = (
             la.eig(matrix)
             if isinstance(matrix, np.ndarray)
-            else spla.eigs(matrix, k=num_eigen, which=side)
+            else spla.eigs(matrix, k=num_eigen, which="SM")
         )
     elif model == "h":
         print("Solving the eigenvalue using hermitian solver")
@@ -88,14 +78,15 @@ def solve_eigenvalues(
     return (eigenfrequencies[idx], eigenvectors[:, idx])
 
 
-def time_dependent_solution(c, frequency, t, A=1, B=1):
+def time_dependent_solution(
+    c: float, frequency: float, t: float, A: int = 1, B: int = 1
+) -> np.ndarray:
     """
     Calculate the time-dependent solution of the wave equation
 
     Params
     -------
     - c (float): speed of sound
-    - eigenmode (np.ndarray): eigenmode of the matrix
     - frequency (float): frequency of the eigenmode
     - t (float): time
     - A (int): amplitude of the cosine. Default is 1
