@@ -9,7 +9,7 @@ def leapfrog(
     m: float = 1,
     initial_v=None,
     F_t=None,
-):
+) -> tuple:
     """
     Run the Leapfrog method for a given time period T, force equation F_x, spring constant k and time step delta_t
 
@@ -57,9 +57,19 @@ def leapfrog(
     return x_list, v_list
 
 
-def exact_position(t: float, k: float, m: float):
+def exact_position(t: float, k: float, m: float) -> float:
     """
     Calculate the exact position of the object at time t given the spring constant k and mass m
+
+    Params
+    -------
+    - t (float): time
+    - k (float): spring constant
+    - m (float): mass
+
+    Returns
+    --------
+    - position (float): position at time t
     """
     A = 1
     omega = np.sqrt(k / m)
@@ -68,9 +78,19 @@ def exact_position(t: float, k: float, m: float):
     return A * np.sin(omega * t + phi)
 
 
-def exact_velocity(t: float, k: float, m: float):
+def exact_velocity(t: float, k: float, m: float) -> float:
     """
     Calculate the exact velocity of the object at time t given the spring constant k and mass m
+
+    Params
+    -------
+    - t (float): time
+    - k (float): spring constant
+    - m (float): mass
+
+    Returns
+    --------
+    - velocity (float): velocity at time t
     """
     A = 1
     omega = np.sqrt(k / m)
