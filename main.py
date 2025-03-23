@@ -1,6 +1,5 @@
-import numpy as np
+import matplotlib.pyplot as plt
 
-from script.create_plot import plot_eigenfrequency, plot_eigenmodus
 from src.config import *
 from src.eigen_solver import solve_eigenvalues
 from src.grid_discretization import (
@@ -23,25 +22,10 @@ def eigenvalues(m):
 
 
 def main():
-    shape = "rectangle"
-    L_list = np.linspace(10, 100, 5).astype(int)
-    N = len(L_list)
-    frequencies_list = np.zeros((N, NUM_MODES), dtype=float)
-
-    for i, L in enumerate(L_list):
-        v = initialize_grid_vector(L, shape)
-        M = initialize_tridiagonal_matrix(v, L)
-        frequencies, eigenvectors = solve_eigenvalues(M, num_eigen=NUM_MODES)
-
-        frequencies_list[i] = frequencies.real
-        eigenmode = (
-            eigenvectors[:, 0].reshape(L, 2 * L if shape == "rectangle" else L).real
-        )
-        plot_eigenmodus(L, eigenmode, shape, save_img=True)
-
-    mean_freq = np.mean(frequencies_list, axis=1)
-    plot_eigenfrequency(L_list, mean_freq, shape, save_img=True)
-    return
+    shape = "circle"
+    m = create_grid(5, shape)
+    plt.imshow(m.toarray())
+    plt.show()
 
 
 if __name__ == "__main__":
