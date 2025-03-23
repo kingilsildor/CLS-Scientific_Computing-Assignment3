@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 from numba import njit
 from scipy.sparse import csr_matrix
 
@@ -30,63 +29,70 @@ def initialize_grid(N: int, value: int | float = 0.0) -> np.ndarray:
 
 
 @njit
-def _fill_neighbours(M, N) -> np.ndarray:
+def _fill_neighbours(rows: int, cols: int, mask: np.ndarray) -> np.ndarray:
     """
-    Fill the neighbors of a given matrix A
+    Fill the neighbors of a given matrix A only if the neighbor cell is part of the shape.
 
     Params
     -------
-    - new_A (np.ndarray): matrix to fill the neighbors for
-    - A (np.ndarray): matrix to find the neighbors for
+    - rows (int): Number of rows in the grid
+    - cols (int): Number of columns in the grid
+    - mask (np.ndarray): Flattened vector indicating valid cells (1 for valid, 0 for invalid)
 
     Returns
     --------
-    - new_A (np.ndarray): matrix with neighbors filled
+    - matrix (np.ndarray): Matrix with neighbors filled based on the mask
     """
-    matrix = np.zeros((M * N, M * N))
+    matrix = np.zeros((rows * cols, rows * cols))
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-    for x in range(M):
-        for y in range(N):
-            index = x * N + y
+
+    for x in range(rows):
+        for y in range(cols):
+            index = x * cols + y
+
+            if mask[index] == 0:
+                continue
 
             for dx, dy in directions:
                 nx, ny = x + dx, y + dy
 
-                if 0 <= nx < M and 0 <= ny < N:
-                    neighbor_index = nx * N + ny
-                    matrix[index, neighbor_index] = OFF_DIAGONAL_VALUE
+                if 0 <= nx < rows and 0 <= ny < cols:
+                    neighbor_index = nx * cols + ny
+
+                    if mask[neighbor_index] == 1:
+                        matrix[index, neighbor_index] = OFF_DIAGONAL_VALUE
+
     return matrix
-
-
-# TODO fix circle
 
 
 def initialize_tridiagonal_matrix(
     vector: np.ndarray, L: int, sparse: bool = True
-) -> np.ndarray | sp.sparse._csr.csr_matrix:
+) -> np.ndarray | csr_matrix:
     """
-    Initialize a tridiagonal matrix from a given vector
+    Initialize a tridiagonal matrix from a given vector with a mask for valid cells.
 
     Params
     -------
-    - vector (np.ndarray): vector to initialize the tridiagonal matrix from
-    - L (int): size of the grid
-    - sparse (bool): whether to return a sparse matrix. Default is True
+    - vector (np.ndarray): Vector to initialize the tridiagonal matrix from
+    - L (int): Size of the grid
+    - sparse (bool): Whether to return a sparse matrix. Default is True
 
     Returns
     --------
-    - stencil_matrix (np.ndarray | sp.sparse._csr.csr_matrix): tridiagonal matrix of the 5-point stencil
+    - stencil_matrix (np.ndarray | csr_matrix): Tridiagonal matrix of the 5-point stencil
     """
     N = vector.shape[0]
     rows, cols = L, int(N / L)
 
-    stencil_matrix = _fill_neighbours(rows, cols)
+    mask = vector.flatten()
+
+    stencil_matrix = _fill_neighbours(rows, cols, mask)
     np.fill_diagonal(stencil_matrix, DIAGONAL_VALUE)
 
     if sparse:
         stencil_matrix = csr_matrix(stencil_matrix)
 
-    # Multiply by the spacial step size
+    # Multiply by the spatial step size
     h = 1 / L
     stencil_matrix /= h**2
     return stencil_matrix
@@ -105,7 +111,6 @@ def initialize_grid_vector(L: int, shape: str = "square") -> np.ndarray:
     --------
     - vector (np.ndarray): grid of size N x N as a vector of size N^2 x 1
     """
-
     if shape == "square":
         matrix = np.ones((L, L))
     elif shape == "rectangle":
